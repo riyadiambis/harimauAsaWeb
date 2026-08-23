@@ -3,7 +3,62 @@
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
 @source '../../storage/framework/views/*.php';
 
+/*
+ * Token dari docs/design-tokens.md. Nama utility sengaja memakai peran
+ * ("text-isi", "rounded-kartu") dan bukan angka, supaya pelanggaran terhadap
+ * tabel tipografi/tata letak langsung kelihatan saat membaca Blade.
+ */
 @theme {
-    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
-        'Segoe UI Symbol', 'Noto Color Emoji';
+    --font-sans: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
+    --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+
+    --color-canvas: #f2f1ed;
+    --color-surface: #fbfaf8;
+    --color-surface-alt: #eae8e2;
+    --color-line: #e2e0d9;
+    --color-ink: #26251f;
+    --color-ink-muted: #6e6c64;
+    --color-ink-faint: #9b998f;
+
+    --color-brand: #7a3b33;
+    --color-action: #2f2e28;
+    --color-action-hover: #45443c;
+
+    --color-state-paid: #4a6b52;
+    --color-state-wait: #8a6d3b;
+    --color-state-late: #8c3b34;
+    --color-state-none: #b4b2a9;
+
+    --text-judul-halaman: 28px;
+    --text-judul-halaman--line-height: 1.25;
+    --text-judul-halaman--font-weight: 600;
+
+    --text-judul-bagian: 20px;
+    --text-judul-bagian--line-height: 1.35;
+    --text-judul-bagian--font-weight: 600;
+
+    --text-judul-kartu: 16px;
+    --text-judul-kartu--line-height: 1.4;
+    --text-judul-kartu--font-weight: 500;
+
+    --text-isi: 15px;
+    --text-isi--line-height: 1.7;
+
+    --text-label: 13px;
+    --text-label--line-height: 1.5;
+
+    --text-nominal: 24px;
+    --text-nominal--line-height: 1.3;
+    --text-nominal--font-weight: 500;
+
+    --radius-kartu: 16px;
+    --radius-kontrol: 10px;
+    --radius-badge: 6px;
+
+    --shadow-kartu: 0 1px 3px rgba(38, 37, 31, 0.06);
+}
+
+/* Alpine: sembunyikan elemen sampai komponennya siap, supaya tidak berkedip. */
+[x-cloak] {
+    display: none !important;
 }

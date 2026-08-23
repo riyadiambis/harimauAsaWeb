@@ -25,7 +25,9 @@ Route::get('/cek-username', CekUsernameController::class)
     ->middleware('throttle:cek-username')
     ->name('cek-username');
 
-Route::middleware('auth')->group(function () {
+// 'sandi.diganti' (A-8) hanya di zona yang butuh login. Rute ganti sandi dan
+// keluar dikecualikan di dalam middleware-nya sendiri supaya tidak terkunci.
+Route::middleware(['auth', 'sandi.diganti'])->group(function () {
     Route::get('/ganti-sandi', [GantiSandiController::class, 'edit'])->name('ganti-sandi.edit');
     Route::put('/ganti-sandi', [GantiSandiController::class, 'update'])->name('ganti-sandi.update');
 

@@ -32,12 +32,16 @@ class MasukController extends Controller
             ]);
         }
 
-        // A-6: pendaftar yang belum disetujui dapat pesan berbeda. Diperiksa
-        // setelah kata sandi benar, jadi bukan alat menebak username.
-        if ($user->member?->status === 'pending') {
-            throw ValidationException::withMessages([
-                'username' => 'Akun kamu masih menunggu persetujuan pengurus.',
-            ]);
+        // A-6 dan status tidak aktif. Diperiksa setelah kata sandi benar, jadi
+        // bukan alat menebak username mana yang terdaftar.
+        $penolakan = match ($user->member?->status) {
+            'pending' => 'Akun kamu masih menunggu persetujuan pengurus.',
+            'non_aktif', 'alumni' => 'Akun kamu sedang tidak aktif. Hubungi pengurus kalau ini keliru.',
+            default => null,
+        };
+
+        if ($penolakan !== null) {
+            throw ValidationException::withMessages(['username' => $penolakan]);
         }
 
         Auth::login($user, $request->boolean('ingat_saya'));

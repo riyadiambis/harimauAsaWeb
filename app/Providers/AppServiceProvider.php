@@ -34,7 +34,7 @@ class AppServiceProvider extends ServiceProvider
         RateLimiter::for('masuk', function (Request $request) {
             return Limit::perMinute(5)->by($request->ip())->response(function () {
                 return back()->withErrors([
-                    'username' => 'Terlalu banyak percobaan masuk. Coba lagi sebentar lagi.',
+                    'username' => 'Terlalu banyak percobaan masuk. Coba lagi dalam satu menit.',
                 ]);
             });
         });

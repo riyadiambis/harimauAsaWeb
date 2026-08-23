@@ -13,8 +13,10 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        $middleware->web(append: [
-            PastikanSandiSudahDiganti::class,
+        // Sengaja TIDAK dipasang di seluruh grup web — halaman publik tetap bisa
+        // dibuka. Ditempelkan per rute yang butuh login (A-8).
+        $middleware->alias([
+            'sandi.diganti' => PastikanSandiSudahDiganti::class,
         ]);
 
         // Halaman masuk aplikasi ini /masuk, bukan /login bawaan Laravel.

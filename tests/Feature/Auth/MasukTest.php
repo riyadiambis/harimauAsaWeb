@@ -6,6 +6,7 @@ use App\Models\Member;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\RateLimiter;
+use PHPUnit\Framework\Attributes\TestWith;
 use Tests\TestCase;
 
 class MasukTest extends TestCase
@@ -15,6 +16,8 @@ class MasukTest extends TestCase
     private const PESAN_KREDENSIAL = 'Username atau kata sandi salah.';
 
     private const PESAN_PENDING = 'Akun kamu masih menunggu persetujuan pengurus.';
+
+    private const PESAN_TIDAK_AKTIF = 'Akun kamu sedang tidak aktif. Hubungi pengurus kalau ini keliru.';
 
     protected function setUp(): void
     {
@@ -104,6 +107,28 @@ class MasukTest extends TestCase
         $this->assertGuest();
     }
 
+    /** Status non_aktif dan alumni ditolak dengan pesan berbeda dari pending. */
+    #[TestWith(['non_aktif'])]
+    #[TestWith(['alumni'])]
+    public function test_akun_tidak_aktif_ditolak(string $status): void
+    {
+        $this->akun($status);
+
+        $response = $this->post('/masuk', [
+            'username' => 'fikri_r',
+            'password' => 'rahasia123',
+        ]);
+
+        $response->assertSessionHasErrors(['username' => self::PESAN_TIDAK_AKTIF]);
+        $this->assertGuest();
+    }
+
+    /** Pesan tidak aktif harus beda dari pesan pending. */
+    public function test_pesan_tidak_aktif_berbeda_dari_pesan_pending(): void
+    {
+        $this->assertNotSame(self::PESAN_PENDING, self::PESAN_TIDAK_AKTIF);
+    }
+
     /** Akun pending dengan sandi salah tetap dapat pesan A-5, bukan A-6. */
     public function test_akun_pending_dengan_sandi_salah_tetap_pesan_kredensial(): void
     {
@@ -128,7 +153,7 @@ class MasukTest extends TestCase
         }
 
         $this->post('/masuk', ['username' => 'fikri_r', 'password' => 'salah'])
-            ->assertSessionHasErrors(['username' => 'Terlalu banyak percobaan masuk. Coba lagi sebentar lagi.']);
+            ->assertSessionHasErrors(['username' => 'Terlalu banyak percobaan masuk. Coba lagi dalam satu menit.']);
     }
 
     public function test_bisa_keluar(): void
