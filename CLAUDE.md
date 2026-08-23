@@ -5,7 +5,7 @@ Self-hosted di mini PC, tanpa payment gateway berbayar.
 
 ## Stack
 
-Laravel 12, Blade + Tailwind + Alpine.js, MySQL, Filament (khusus panel admin).
+Laravel 13.23, Blade + Tailwind + Alpine.js, MySQL, Filament (khusus panel admin).
 Timezone aplikasi: `Asia/Makassar`. Bahasa antarmuka: Indonesia.
 
 ## Perintah

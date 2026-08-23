@@ -95,9 +95,9 @@ Ikuti `docs/design-tokens.md`. Form pakai input dengan border `--line`, fokus `-
 ## Akun uji (seeder)
 
 ```
-Admin        adminMin     / adminamin123
-Guru Besar   guruBesar    / gurusuhu212
-Sekben Umum  sekbenUang   / uangUang123
+Admin        adminmin     / adminamin123
+Guru Besar   gurubesar    / gurusuhu212
+Sekben Umum  sekbenuang   / uangUang123
 Editor       editorcoba1  / editedit1
 Warga        wargacoba1   / wargawarga1
 Anggota      anggotacoba1 / anggotaanggota1
