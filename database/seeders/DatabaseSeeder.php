@@ -14,7 +14,8 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // Seeder akun uji (adminMin, guruBesar, sekbenUang, dst) menyusul bersama
-        // alur registrasi & login. Lihat docs/fitur/01-auth.md bagian "Akun uji".
+        $this->call([
+            AkunUjiSeeder::class,
+        ]);
     }
 }

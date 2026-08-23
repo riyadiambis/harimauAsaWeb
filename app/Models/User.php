@@ -41,6 +41,19 @@ class User extends Authenticatable
     }
 
     /**
+     * Aturan validasi username (A-1): 4–20 karakter, hanya a-z, 0-9, dan _.
+     *
+     * Dipakai bersama oleh form pendaftaran dan endpoint cek ketersediaan supaya
+     * keduanya tidak pernah berbeda pendapat soal username mana yang sah.
+     *
+     * @return array<int, string>
+     */
+    public static function aturanUsername(): array
+    {
+        return ['required', 'string', 'min:4', 'max:20', 'regex:/^[a-z0-9_]+$/'];
+    }
+
+    /**
      * Username selalu disimpan lowercase supaya "Riyadi" dan "riyadi" tidak
      * jadi dua akun berbeda (A-10).
      */
