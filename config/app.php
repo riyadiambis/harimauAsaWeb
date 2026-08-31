@@ -76,13 +76,16 @@ return [
     | Application Locale Configuration
     |--------------------------------------------------------------------------
     |
-    | The application locale determines the default locale that will be used
-    | by Laravel's translation / localization methods. This option can be
-    | set to any locale for which you plan to have translation strings.
+    | Bahasa antarmuka aplikasi ini Indonesia, jadi default-nya `id` — bukan
+    | `en` bawaan Laravel. Terjemahannya ada di `lang/id/`.
+    |
+    | `fallback_locale` tetap `en`: kalau suatu kunci belum diterjemahkan,
+    | lebih baik muncul kalimat Inggris bawaan Laravel daripada nama kunci
+    | mentah seperti "validation.uploaded" di layar pengguna.
     |
     */
 
-    'locale' => env('APP_LOCALE', 'en'),
+    'locale' => env('APP_LOCALE', 'id'),
 
     'fallback_locale' => env('APP_FALLBACK_LOCALE', 'en'),
 
