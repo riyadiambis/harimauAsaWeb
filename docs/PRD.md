@@ -371,7 +371,7 @@ Semua perintah harus bisa dijalankan manual dengan aman untuk uji coba.
 
 | Lapisan | Pilihan |
 |---|---|
-| Framework | Laravel 12 |
+| Framework | Laravel 13.23 |
 | Tampilan | Blade + Tailwind CSS + Alpine.js |
 | Basis data | MySQL 8 / MariaDB |
 | Panel admin | Filament (tidak wajib ikut design tokens) |

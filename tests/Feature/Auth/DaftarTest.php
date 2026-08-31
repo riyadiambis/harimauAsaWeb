@@ -70,8 +70,10 @@ class DaftarTest extends TestCase
     {
         $this->post('/daftar', $this->isian(['username' => 'RanggaSap']));
 
-        $this->assertDatabaseHas('users', ['username' => 'ranggasap']);
-        $this->assertDatabaseMissing('users', ['username' => 'RanggaSap']);
+        // Diperiksa sebagai string PHP, bukan lewat assertDatabaseMissing:
+        // collation MySQL tidak peka huruf besar-kecil, jadi mencari "RanggaSap"
+        // tetap menemukan baris "ranggasap" dan assertion itu tidak membuktikan apa pun.
+        $this->assertSame('ranggasap', User::sole()->username);
     }
 
     /** Skenario 2, bagian "ditolak". */

@@ -10,8 +10,8 @@ Buka file ini tiap mulai sesi kerja. Isinya urutan, ketergantungan, dan status t
 
 | # | Fitur | File spek | Butuh | Status |
 |---|---|---|---|---|
-| 01 | Autentikasi & akun | `fitur/01-auth.md` | — | belum |
-| 02 | Anggota, tingkatan & struktur | `fitur/02-anggota-struktur.md` | 01 | belum |
+| 01 | Autentikasi & akun | `fitur/01-auth.md` | — | selesai |
+| 02 | Anggota, tingkatan & struktur | `fitur/02-anggota-struktur.md` | 01 | dikerjakan |
 | 03 | Periode & penerbitan tagihan | `fitur/03-kas-periode.md` | 02 | belum |
 | 04 | Jendela bayar & denda otomatis | `fitur/04-kas-denda.md` | 03 | belum |
 | 05 | Pembayaran (kode unik, QRIS, bukti) | `fitur/05-kas-pembayaran.md` | 04 | belum |
@@ -71,6 +71,6 @@ File spek ditulis menjelang fitur itu dikerjakan, bukan sekaligus di awal — su
 - Login pakai **username**, email opsional
 - Yang kena kas bulanan: `tingkat_keanggotaan = warga` DAN `status = aktif`
 - Anggota naik jadi Warga → mulai ditagih **bulan berikutnya**, bukan bulan berjalan
-- `nia` dimiliki semua anggota sejak daftar; `no_warga` hanya diberikan saat naik ke tingkat Warga (nomor pada kartu tanda warga)
+- `nia` **null selama pendaftar masih `pending`**, digenerate sistem saat pendaftarannya disetujui (B-1, B-12); `no_warga` hanya diberikan saat naik ke tingkat Warga (nomor pada kartu tanda warga)
 - Hak akses berupa **boolean terpisah**, bukan satu kolom role
 - Bagan struktur di mobile ditampilkan sebagai **daftar bertingkat yang bisa di-expand**, bukan pohon bergaris

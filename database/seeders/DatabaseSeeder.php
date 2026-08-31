@@ -14,8 +14,13 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
+        // Urutannya penting: keanggotaan dan struktur menempel pada akun uji
+        // dan pada wilayah/ranting yang sudah ada.
         $this->call([
             AkunUjiSeeder::class,
+            WilayahRantingSeeder::class,
+            KeanggotaanUjiSeeder::class,
+            StrukturSeeder::class,
         ]);
     }
 }

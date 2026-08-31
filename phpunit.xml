@@ -23,9 +23,9 @@
         <env name="BCRYPT_ROUNDS" value="4"/>
         <env name="BROADCAST_CONNECTION" value="null"/>
         <env name="CACHE_STORE" value="array"/>
-        <env name="DB_CONNECTION" value="sqlite"/>
-        <env name="DB_DATABASE" value=":memory:"/>
-        <env name="DB_URL" value=""/>
+        <!-- Sengaja TIDAK menyetel DB_* di sini. Nilai <env> phpunit menang atas
+             dotenv, jadi menyetelnya akan memblokir .env.testing yang menunjuk ke
+             harimau_asa_test. Basis data uji diatur di sana. -->
         <env name="MAIL_MAILER" value="array"/>
         <env name="QUEUE_CONNECTION" value="sync"/>
         <env name="SESSION_DRIVER" value="array"/>
