@@ -11,10 +11,32 @@ Catatan tooling untuk project ini: apa yang sudah terpasang, apa yang belum, dan
 | Claude Code | ✅ terpasang | v2.1.239, installer native Windows, di `%USERPROFILE%\.local\bin` |
 | Playwright MCP | ✅ terpasang | Terdaftar di scope lokal project ini |
 | Browser Playwright | ✅ terunduh | Chromium, Firefox, WebKit |
-| Laravel | ✅ terpasang | Laravel 12 di `webHarimauAsa/` |
+| Laravel | ✅ terpasang | Laravel 13.23 di `webHarimauAsa/` |
 | Laravel Boost | ⬜ belum | Pasang setelah migration pertama jadi (lihat bawah) |
 | CLAUDE.md | ✅ ada | Di root project |
 | Skill review desain | ⬜ belum | Buat sebelum fitur 07 (dashboard) |
+
+---
+
+## Menyiapkan mesin baru: berkas env
+
+Dua berkas env **tidak ikut git** karena memuat kredensial: `.env` dan `.env.testing`. Keduanya punya contoh yang ikut git — salin, lalu isi bagian rahasianya.
+
+```powershell
+cp .env.example .env
+cp .env.testing.example .env.testing
+php artisan key:generate
+php artisan key:generate --env=testing
+```
+
+Lalu isi `DB_PASSWORD` di keduanya sesuai MySQL di mesin itu.
+
+**Kalau `.env.testing` lupa disalin**, `php artisan test` akan jatuh ke `.env` dan menjalankan tes terhadap **database pengembangan** `harimau_asa` — bukan `harimau_asa_test`. Tes yang memakai `RefreshDatabase` akan mengosongkan data kerjamu tanpa peringatan apa pun. Salin dulu sebelum menjalankan tes pertama kali.
+
+Dua hal yang sengaja **tidak** ada di `.env.testing.example`, dan jangan ditambahkan:
+
+- **`APP_TIMEZONE`** — dibiarkan kosong supaya `ZonaWaktuTest` benar-benar menguji nilai bawaan `config/app.php` (Asia/Makassar, BR-16). Kalau dipin di env uji, tes tetap hijau walau konfigurasinya diam-diam kembali ke UTC.
+- **`DB_*` di `phpunit.xml`** — nilai `<env>` phpunit menang atas dotenv, jadi menyetelnya di sana akan memblokir `.env.testing` dan mengarahkan tes kembali ke database pengembangan.
 
 ---
 
