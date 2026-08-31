@@ -59,13 +59,17 @@ return [
     | Application Timezone
     |--------------------------------------------------------------------------
     |
-    | Here you may specify the default timezone for your application, which
-    | will be used by the PHP date and date-time functions. The timezone
-    | is set to "UTC" by default as it is suitable for most use cases.
+    | BR-16: zona waktu aplikasi Asia/Makassar (WITA, UTC+8). Semua tanggal
+    | batas — jendela bebas denda tanggal 1-5, job denda tanggal 6, penerbitan
+    | tagihan tanggal 1 — dihitung terhadap zona ini, bukan UTC.
+    |
+    | Default-nya sengaja Asia/Makassar dan bukan UTC: kalau APP_TIMEZONE lupa
+    | dipasang di server, aplikasi tetap menghitung tanggal dengan benar. Salah
+    | zona di sini menggeser batas hari 8 jam tanpa satu pun pesan error.
     |
     */
 
-    'timezone' => 'UTC',
+    'timezone' => env('APP_TIMEZONE', 'Asia/Makassar'),
 
     /*
     |--------------------------------------------------------------------------
