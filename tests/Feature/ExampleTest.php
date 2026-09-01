@@ -2,18 +2,17 @@
 
 namespace Tests\Feature;
 
-// use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 class ExampleTest extends TestCase
 {
     /**
-     * A basic test example.
+     * Rute / tidak lagi merender halaman: sampai fitur 07 dan 11 dikerjakan ia
+     * hanya mengarahkan orang ke tempat yang masuk akal. Perilaku lengkapnya
+     * diuji di tests/Feature/Panel/PintuPanelTest.php.
      */
-    public function test_the_application_returns_a_successful_response(): void
+    public function test_beranda_mengarahkan_tamu_ke_halaman_masuk(): void
     {
-        $response = $this->get('/');
-
-        $response->assertStatus(200);
+        $this->get('/')->assertRedirect(route('masuk'));
     }
 }

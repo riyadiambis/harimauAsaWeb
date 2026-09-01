@@ -6,9 +6,29 @@ use App\Http\Controllers\Auth\GantiSandiController;
 use App\Http\Controllers\Auth\MasukController;
 use Illuminate\Support\Facades\Route;
 
+// SEMENTARA. Beranda publik sungguhan dikerjakan di fitur 11 dan dasbor anggota
+// di fitur 07; sampai keduanya ada, rute ini hanya mengarahkan orang ke tempat
+// yang masuk akal. Jangan dibiarkan jadi permanen.
+//
+// TODO fitur 11: ganti dengan beranda publik (hero slider, galeri, konten).
+//
+// Pengalihannya bersyarat, bukan `redirect('/masuk')` polos: /masuk ada di grup
+// `guest`, dan RedirectIfAuthenticated memantulkan pengguna yang sudah masuk
+// kembali ke / karena tidak ada rute bernama `dashboard` atau `home`. Pengalihan
+// tanpa syarat menghasilkan loop tak berujung persis saat orang berhasil masuk.
 Route::get('/', function () {
-    return view('welcome');
-});
+    if (! auth()->check()) {
+        return redirect()->route('masuk');
+    }
+
+    // B-15: yang berhak langsung dibawa ke panel. Sisanya ditahan halaman
+    // sementara sampai dasbor anggota (fitur 07) ada.
+    if (auth()->user()->punyaHakAkses()) {
+        return redirect('/admin');
+    }
+
+    return view('beranda-sementara');
+})->name('beranda');
 
 Route::middleware('guest')->group(function () {
     Route::get('/daftar', [DaftarController::class, 'create'])->name('daftar');
