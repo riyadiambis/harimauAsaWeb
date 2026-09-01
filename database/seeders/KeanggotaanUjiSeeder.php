@@ -10,18 +10,12 @@ use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 /**
- * Melengkapi data keanggotaan akun uji — tingkat, sabuk, ranting, nia, no_warga,
- * dan tanggal naik warga. Dipisah supaya AkunUjiSeeder tetap murni soal
- * autentikasi (fitur 01) dan seeder ini yang memegang aturan fitur 02.
+ * Kolom keanggotaan (fitur 02) untuk akun uji. Butuh AkunUjiSeeder dan
+ * WilayahRantingSeeder lebih dulu.
  *
- * Daftar akunnya dibaca dari AkunUjiSeeder::DAFTAR — satu sumber kebenaran.
- *
- * Butuh AkunUjiSeeder dan WilayahRantingSeeder sudah jalan lebih dulu.
- *
- * MEMULIHKAN, bukan sekadar melengkapi. Kolom yang keadaan awalnya null
- * dikembalikan ke null, bukan dibiarkan apa adanya — kalau tidak, akun uji yang
- * sempat diubah lewat panel tidak pernah benar-benar kembali ke keadaan awal
- * dan seeder ini cuma tampak idempoten.
+ * MEMULIHKAN, bukan melengkapi: kolom yang awalnya null dikembalikan ke null.
+ * Kalau hanya melengkapi yang kosong, akun yang terlanjur diubah lewat panel
+ * tidak pernah benar-benar kembali dan seeder ini cuma tampak idempoten.
  */
 class KeanggotaanUjiSeeder extends Seeder
 {
@@ -39,9 +33,8 @@ class KeanggotaanUjiSeeder extends Seeder
                 continue;
             }
 
-            // Akun di luar daftar tidak pernah tersentuh: loop ini hanya berjalan
-            // untuk username yang ada di AkunUjiSeeder::DAFTAR. Pendaftaran
-            // sungguhan aman.
+            // Pendaftaran sungguhan aman: loop hanya berjalan untuk username
+            // yang ada di DAFTAR.
             $this->pulihkan(
                 $user->member,
                 $awal,
@@ -64,27 +57,17 @@ class KeanggotaanUjiSeeder extends Seeder
         $member->tingkatan = $awal['tingkatan'];
         $member->ranting_id = $rantingId;
 
-        // B-13: tidak ada akun uji yang punya nomor kartu tanda warga. Kalau
-        // sempat diisi lewat panel, dikosongkan lagi.
+        // B-13: tidak ada akun uji yang punya nomor kartu warga.
         $member->no_warga = null;
 
-        // B-7: hanya warga yang punya tanggal naik warga. Yang diturunkan lagi
-        // jadi anggota harus kehilangan tanggalnya, bukan menyimpan tanggal basi
-        // yang nanti dibaca penerbitan tagihan fitur 03.
-        // Dipaksa, bukan dipertahankan: tanggal yang sempat diubah lewat panel
-        // harus kembali ke nilai awalnya, bukan menetap.
+        // B-7. Dipaksa, bukan dipertahankan — tanggal basi akan dibaca
+        // penerbitan tagihan fitur 03 kalau orangnya naik warga lagi.
         $member->tanggal_naik_warga = $awal['tingkat_keanggotaan'] === 'warga'
             ? $member->tanggal_gabung->copy()->addMonths(18)
             : null;
 
-        // B-1 dan B-12. Pendaftar yang masih pending TIDAK punya nia; kalau
-        // sempat disetujui lewat panel lalu dikembalikan ke pending oleh
-        // AkunUjiSeeder, nomornya ikut dicabut supaya keadaannya benar-benar
-        // seperti semula.
-        //
-        // Yang sudah disetujui mempertahankan nomornya kalau sudah punya (B-12:
-        // tidak berubah lagi setelah diberikan) dan baru diberi nomor kalau
-        // memang belum pernah punya.
+        // B-1: pending tidak punya nia, jadi nomor yang terlanjur terbit dicabut.
+        // B-12: yang sudah sah dipertahankan, tidak diacak ulang tiap seeding.
         $member->nia = $awal['status'] === 'pending'
             ? null
             : ($member->nia ?? PenomoranNia::berikutnya($member->tanggal_gabung->year));

@@ -9,10 +9,8 @@ use Illuminate\Database\Seeder;
 
 class WilayahRantingSeeder extends Seeder
 {
-    // Dipasang di seeder ini sendiri, bukan hanya di DatabaseSeeder:
-    // tiap seeder harus aman dijalankan sendirian untuk memulihkan
-    // keadaan, dan tanpa ini pemulihan meninggalkan baris audit palsu
-    // seolah ada pengurus yang mengubah data.
+    // Tanpa ini, menjalankan seeder ini sendirian meninggalkan baris audit
+    // palsu seolah ada pengurus yang mengubah data.
     use WithoutModelEvents;
 
     /**

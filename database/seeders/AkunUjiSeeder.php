@@ -11,15 +11,8 @@ class AkunUjiSeeder extends Seeder
     use WithoutModelEvents;
 
     /**
-     * Keadaan awal seluruh akun uji — SATU sumber kebenaran.
-     *
-     * KeanggotaanUjiSeeder membaca daftar yang sama untuk kolom fitur 02, supaya
-     * kedua seeder tidak pernah berbeda pendapat soal siapa saja akun ujinya.
-     * Sebelumnya daftar username-nya diketik dua kali di dua berkas.
-     *
-     * Kolom fitur 01 (nama, sandi, hak akses, status, tanggal_gabung) dipulihkan
-     * seeder ini; kolom fitur 02 (tingkat, sabuk, ranting, nia, no_warga,
-     * tanggal_naik_warga) oleh KeanggotaanUjiSeeder.
+     * Keadaan awal akun uji — satu sumber kebenaran, dibaca juga oleh
+     * KeanggotaanUjiSeeder supaya daftarnya tidak diketik dua kali.
      *
      * TODO: ganti dengan data pengurus resmi.
      *
@@ -100,15 +93,7 @@ class AkunUjiSeeder extends Seeder
     ];
 
     /**
-     * Akun uji sesuai docs/fitur/01-auth.md.
-     *
-     * Sandi di daftar atas HANYA untuk pengembangan — ganti sebelum dipakai
-     * sungguhan.
-     *
-     * WithoutModelEvents dipasang di seeder ini sendiri, bukan hanya di
-     * DatabaseSeeder: seeder ini harus aman dijalankan sendirian untuk memulihkan
-     * keadaan, dan tanpa itu pemulihan meninggalkan baris audit palsu seolah ada
-     * pengurus yang mengubah data.
+     * Akun uji sesuai docs/fitur/01-auth.md. Sandinya hanya untuk pengembangan.
      */
     public function run(): void
     {
@@ -133,9 +118,8 @@ class AkunUjiSeeder extends Seeder
             'is_guru_besar' => false,
             'is_sekben' => false,
             'is_admin' => false,
-            // Dikembalikan false: akun uji yang sandinya sempat direset lewat
-            // panel (A-7) akan terkunci di halaman ganti sandi selamanya kalau
-            // benderanya tidak ikut dipulihkan.
+            // A-7: tanpa ini, akun uji yang sandinya sempat direset terkunci
+            // di halaman ganti sandi selamanya.
             'harus_ganti_sandi' => false,
             'deleted_at' => null,
             ...$awal['hak_akses'],
