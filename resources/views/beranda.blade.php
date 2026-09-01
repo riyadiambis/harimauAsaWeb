@@ -67,6 +67,10 @@
             {{-- Judul dan kalimatnya satu kesatuan, jadi jaraknya rapat —
                  32px di atas adalah jarak antar section, bukan antar baris. --}}
             <div class="flex flex-1 flex-col justify-center gap-4">
+                {{-- --brand di sini SAH karena judulnya adalah nama perguruan itu
+                     sendiri, jadi terhitung logo/identitas. Judul yang menamai
+                     isi halaman ("Anggota", "Struktur kepengurusan") memakai
+                     --ink. Lihat catatan di docs/design-tokens.md. --}}
                 <h1 class="text-judul-halaman text-brand">Pertalian Silat Harimau Asa</h1>
 
                 <p class="max-w-[52ch] text-ink-muted">

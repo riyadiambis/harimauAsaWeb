@@ -29,6 +29,10 @@ Gaya: **soft minimalism** — netral hangat, kontras rendah, ruang kosong lega, 
 
 **Aturan:** halaman didominasi netral. `--brand` maksimal muncul 4–5 titik per halaman (logo, label section, tautan, aksen linimasa). Tanpa gradien, tanpa glow, tanpa bayangan tebal.
 
+**Judul halaman memakai `--ink`, bukan `--brand`.** Daftar di atas tidak menyebut judul halaman, dan itu disengaja — judul yang berwarna brand membuat setiap halaman punya titik oxblood besar, persis kebalikan dari "dipakai hemat".
+
+Satu pengecualian: bila judulnya sendiri **adalah nama perguruan** ("Pertalian Silat Harimau Asa" di beranda), ia dihitung sebagai logo/identitas dan boleh `--brand`. Judul yang menamai isi halaman — "Anggota", "Struktur kepengurusan", "Galeri" — tetap `--ink`.
+
 Badge status: warna status di atas latar terang, dibuat dengan opacity 12% di atas `--surface`.
 
 ---
