@@ -8,6 +8,23 @@ use App\Models\User;
 class MemberPolicy
 {
     /**
+     * B-17: melihat daftar dan rincian anggota.
+     *
+     * Membaca dipisah tegas dari mengubah. Siapa pun yang lolos gerbang panel
+     * (B-15) boleh membacanya — termasuk Editor. Yang boleh MENGUBAH tetap
+     * ditentukan B-2, B-5, dan B-6 di bawah, dan tidak ikut melonggar.
+     */
+    public function viewAny(User $user): bool
+    {
+        return $user->punyaHakAkses();
+    }
+
+    public function view(User $user, Member $member): bool
+    {
+        return $user->punyaHakAkses();
+    }
+
+    /**
      * B-2: mengubah tingkat keanggotaan, sabuk, dan no warga.
      *
      * Admin sengaja TIDAK cukup. Kalau seorang Admin juga memegang salah satu

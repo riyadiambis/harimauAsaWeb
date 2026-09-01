@@ -11,12 +11,14 @@ use Filament\Pages\Dashboard;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
+use Filament\View\PanelsRenderHook;
 use Filament\Widgets\FilamentInfoWidget;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\PreventRequestForgery;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
+use Illuminate\Support\Facades\Blade;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 
 class AdminPanelProvider extends PanelProvider
@@ -63,6 +65,19 @@ class AdminPanelProvider extends PanelProvider
             //
             // Closure-nya menerima Action bawaan dan hanya menukar URL-nya,
             // jadi label, ikon, dan ->postToUrl() Filament tetap terpakai.
+            // design-tokens: JetBrains Mono khusus angka, kode unik, NIA, dan
+            // no warga. Filament merender ->fontFamily(FontFamily::Mono) sebagai
+            // .fi-font-mono yang membaca var(--mono-font-family), jadi cukup
+            // mengarahkan variabel itu.
+            //
+            // Berkas fontnya di-host sendiri lewat plugin Vite (vite.config.js) —
+            // mini PC ini tidak selalu punya jalur keluar, jadi jangan
+            // bergantung pada CDN. @fonts menangani dev maupun hasil build.
+            ->renderHook(
+                PanelsRenderHook::HEAD_END,
+                fn (): string => Blade::render('@fonts')
+                    ."<style>:root{--mono-font-family:'JetBrains Mono';}</style>",
+            )
             ->userMenuItems([
                 'logout' => fn (Action $action): Action => $action->url(route('keluar')),
             ])

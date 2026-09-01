@@ -102,6 +102,27 @@ class Member extends Model
     ];
 
     /**
+     * Nama tampilan tingkat keanggotaan. Dua sumbu terpisah — ini yang
+     * menentukan kewajiban kas, bukan sabuk maupun hak akses.
+     */
+    public const LABEL_TINGKAT_KEANGGOTAAN = [
+        'anggota' => 'Anggota',
+        'warga' => 'Warga',
+    ];
+
+    /**
+     * Nama tampilan status. "Menunggu persetujuan" mengikuti kalimat yang sudah
+     * dipakai A-6 di halaman masuk, supaya pengurus dan pendaftar membaca istilah
+     * yang sama.
+     */
+    public const LABEL_STATUS = [
+        'pending' => 'Menunggu persetujuan',
+        'aktif' => 'Aktif',
+        'non_aktif' => 'Non-aktif',
+        'alumni' => 'Alumni',
+    ];
+
+    /**
      * @return array<string, string>
      */
     protected function casts(): array
@@ -154,6 +175,17 @@ class Member extends Model
     public function labelTingkatan(): string
     {
         return self::LABEL_TINGKATAN[$this->tingkatan] ?? $this->tingkatan;
+    }
+
+    public function labelTingkatKeanggotaan(): string
+    {
+        return self::LABEL_TINGKAT_KEANGGOTAAN[$this->tingkat_keanggotaan]
+            ?? $this->tingkat_keanggotaan;
+    }
+
+    public function labelStatus(): string
+    {
+        return self::LABEL_STATUS[$this->status] ?? $this->status;
     }
 
     /**

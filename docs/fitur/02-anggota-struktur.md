@@ -139,6 +139,7 @@ Ditegakkan lewat foreign key, bukan hanya di kode:
 - **B-14** Sistem harus **selalu punya minimal satu Admin**. Dua pagar: (a) Admin tidak bisa mencabut `is_admin` miliknya sendiri — harus lewat Admin lain; (b) `is_admin` terakhir tidak bisa dicabut, dan akun Admin terakhir tidak bisa dihapus. Dijaga di level model supaya tidak ada jalur yang bisa melanggarnya, sebab sekali dilanggar tidak ada lagi yang berwenang mengatur hak akses dan pemulihannya harus lewat database langsung
 - **B-15** Yang boleh membuka panel pengelola `/admin` adalah pengguna yang punya **minimal satu dari empat kolom hak akses** bernilai true (`is_editor`, `is_guru_besar`, `is_sekben`, `is_admin`). Anggota tanpa hak akses apa pun ditolak di pintu panel. Ini **gerbang masuk saja** — apa yang boleh dilakukan di dalamnya tetap ditentukan policy B-2, B-4, B-5, dan B-6, jadi Editor yang lolos masuk tetap tidak bisa mengubah sabuk atau hak akses siapa pun. Ditegakkan lewat `canAccessPanel()` di model `User`
 - **B-16** Yang berhak mengelola `wilayah` dan `ranting`: **Guru Besar dan Sekben Umum saja** — sama seperti B-4, karena wilayah dan ranting adalah struktur organisasi yang sejenis dengan bagan kepengurusan. Admin tidak bisa, kecuali dia juga memegang salah satu bendera itu. Editor lolos gerbang B-15 dan boleh masuk panel, tapi tidak melihat menu wilayah/ranting sama sekali
+- **B-17** Yang boleh **melihat** daftar dan rincian anggota di `/admin/anggota`: **semua yang lolos gerbang B-15**, yaitu pemegang minimal satu hak akses — termasuk Editor. Membaca sengaja dipisah tegas dari mengubah: B-2, B-5, dan B-6 mengatur siapa boleh MENGUBAH dan tidak ikut melonggar oleh aturan ini. Perlu disadari daftar ini memuat data pribadi seluruh anggota (nama, NIA, status, ranting)
 
 ---
 
@@ -199,7 +200,9 @@ Seeder dipecah menurut ketergantungannya, dan urutannya diatur di `DatabaseSeede
 - [x] Audit log tertulis untuk semua perubahan di B-10
 - [x] Kerangka panel Filament di `/admin` dengan gerbang akses B-15
 - [x] Panel kelola wilayah & ranting (B-16), dengan penolakan hapus induk yang terbaca
-- [ ] Panel kelola anggota, struktur, riwayat Guru Besar
+- [x] Panel anggota: daftar & lihat saja (B-17), tanpa aksi yang mengubah data
+- [ ] Panel anggota: aksi setujui, ubah status, ubah tingkat & sabuk, reset kata sandi
+- [ ] Panel kelola struktur dan riwayat Guru Besar
 - [x] Seeder data awal
 
 ## Skenario uji
@@ -222,3 +225,6 @@ Seeder dipecah menurut ketergantungannya, dan urutannya diatur di `DatabaseSeede
 16. Guru Besar dan Sekben membuka menu wilayah/ranting di panel → terlihat; Admin dan Editor → menunya tidak ada sama sekali (B-16)
 17. Hapus wilayah yang masih punya ranting → ditolak dengan pesan yang terbaca, bukan galat SQL; wilayah yang sudah kosong → terhapus
 18. Buat, sunting, dan hapus wilayah/ranting → ketiganya muncul di audit log (B-10)
+19. Daftar anggota diurutkan bawaan menurut `tingkatan_urutan` menurun → Putih Warga 3 paling atas, Hitam/Polos paling bawah (lihat skenario 2)
+20. Anggota `pending` tampil di daftar dengan NIA kosong yang terbaca wajar, bukan seperti data rusak (B-1)
+21. Editor membuka `/admin/anggota` → boleh membaca (B-17); tapi tidak menemukan satu pun aksi yang mengubah data
