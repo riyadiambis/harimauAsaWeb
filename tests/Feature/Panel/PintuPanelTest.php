@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Panel;
 
+use App\Http\Controllers\Auth\MasukController;
 use App\Models\User;
 use Filament\Facades\Filament;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -194,5 +195,57 @@ class PintuPanelTest extends TestCase
 
         $this->assertStringContainsString(route('keluar'), $html);
         $this->assertStringNotContainsString('admin/logout', $html);
+    }
+
+    // --- Rute keluar milik Filament ditimpa -----------------------------------
+
+    /**
+     * POST /admin/logout milik Filament ditimpa rute bernama sama yang menunjuk
+     * MasukController::destroy, jadi tidak ada rute Filament yang menganggur
+     * dengan jalur keluar sendiri.
+     */
+    public function test_rute_logout_filament_menunjuk_controller_aplikasi(): void
+    {
+        $rute = app('router')->getRoutes()->getByName('filament.admin.auth.logout');
+
+        $this->assertNotNull($rute);
+        $this->assertSame(
+            MasukController::class.'@destroy',
+            $rute->getAction('controller'),
+        );
+    }
+
+    public function test_rute_logout_filament_mengakhiri_sesi(): void
+    {
+        $admin = $this->penggunaDengan(['is_admin']);
+
+        $this->actingAs($admin)
+            ->post('/admin/logout')
+            ->assertRedirect(route('masuk'));
+
+        $this->assertGuest();
+    }
+
+    /** Keduanya harus mendarat di tempat yang sama. */
+    public function test_kedua_jalur_keluar_mendarat_di_tempat_sama(): void
+    {
+        $lewatPanel = $this->actingAs($this->penggunaDengan(['is_admin']))
+            ->post('/admin/logout');
+        $this->assertGuest();
+
+        $lewatAplikasi = $this->actingAs($this->penggunaDengan(['is_admin']))
+            ->post(route('keluar'));
+        $this->assertGuest();
+
+        $this->assertSame(
+            $lewatAplikasi->headers->get('Location'),
+            $lewatPanel->headers->get('Location'),
+        );
+    }
+
+    /** Tamu tidak bisa memanggilnya — middleware auth tetap terpasang. */
+    public function test_tamu_tidak_bisa_memanggil_rute_keluar_panel(): void
+    {
+        $this->post('/admin/logout')->assertRedirect(route('masuk'));
     }
 }
