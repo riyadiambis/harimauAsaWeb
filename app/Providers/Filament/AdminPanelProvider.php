@@ -2,6 +2,7 @@
 
 namespace App\Providers\Filament;
 
+use Filament\Actions\Action;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
@@ -10,7 +11,6 @@ use Filament\Pages\Dashboard;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
-use Filament\Widgets\AccountWidget;
 use Filament\Widgets\FilamentInfoWidget;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
@@ -45,9 +45,26 @@ class AdminPanelProvider extends PanelProvider
                 Dashboard::class,
             ])
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\Filament\Widgets')
+            // AccountWidget SENGAJA TIDAK dipasang. Widget bawaan itu merender
+            // tombol keluarnya sendiri langsung ke filament()->getLogoutUrl()
+            // di dalam view-nya, jadi ia tidak ikut override userMenuItems di
+            // bawah dan menjadi pintu keluar kedua lewat POST /admin/logout.
+            // getLogoutUrl() dipatok ke rute auth.logout panel dan tidak punya
+            // hook konfigurasi, jadi mencabut widgetnya yang paling bersih.
             ->widgets([
-                AccountWidget::class,
                 FilamentInfoWidget::class,
+            ])
+            // Tombol keluar di panel memakai /keluar milik aplikasi, bukan
+            // POST /admin/logout bawaan Filament. Keduanya sama-sama mengakhiri
+            // sesi hari ini, tapi jalur Filament memanggil controller-nya
+            // sendiri — begitu MasukController::destroy() dapat tambahan
+            // (audit log keluar, pembersihan kode unik pembayaran), panel akan
+            // diam-diam melewatinya.
+            //
+            // Closure-nya menerima Action bawaan dan hanya menukar URL-nya,
+            // jadi label, ikon, dan ->postToUrl() Filament tetap terpakai.
+            ->userMenuItems([
+                'logout' => fn (Action $action): Action => $action->url(route('keluar')),
             ])
             ->middleware([
                 EncryptCookies::class,

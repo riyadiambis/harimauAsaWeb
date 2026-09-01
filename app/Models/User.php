@@ -130,6 +130,19 @@ class User extends Authenticatable implements FilamentUser, HasName
      */
     public function canAccessPanel(Panel $panel): bool
     {
+        return $this->punyaHakAkses();
+    }
+
+    /**
+     * Apakah dia memegang minimal satu dari empat bendera hak akses (B-15).
+     *
+     * Dipisah dari canAccessPanel() supaya tampilan bisa menanyakan hal yang
+     * sama tanpa perlu memegang objek Panel — tautan "Panel pengelola" di
+     * halaman depan memakai metode ini. Satu sumber kebenaran: tautan dan pintu
+     * panel tidak mungkin berbeda pendapat.
+     */
+    public function punyaHakAkses(): bool
+    {
         return $this->is_editor
             || $this->is_guru_besar
             || $this->is_sekben
