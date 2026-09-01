@@ -156,6 +156,40 @@ class Member extends Model
                 ($member->tanggal_gabung ?? now())->year
             );
         });
+
+        // B-7: naik ke tingkat `warga` mengisi `tanggal_naik_warga`.
+        //
+        // Dipasang di model dan bukan di aksi panel, dengan alasan yang sama
+        // seperti penomoran nia di atas: supaya jalur mana pun — panel, tinker,
+        // perintah artisan — berperilaku sama. Aksi yang menuliskannya sendiri
+        // akan menyimpang diam-diam begitu aturannya berubah.
+        //
+        // TIDAK ada logika penagihan di sini. Kapan tagihan pertama terbit
+        // dihitung fitur 03 dari tanggal ini; yang jadi tanggung jawab model
+        // hanyalah memastikan tanggalnya terisi benar.
+        static::saving(function (self $member): void {
+            // Hanya perpindahan tingkat pada baris yang sudah ada. Baris baru
+            // tidak sedang "naik" dari mana pun.
+            if (! $member->exists || ! $member->isDirty('tingkat_keanggotaan')) {
+                return;
+            }
+
+            if ($member->tingkat_keanggotaan === 'warga') {
+                $member->tanggal_naik_warga ??= now()->toDateString();
+
+                return;
+            }
+
+            // Turun kembali ke `anggota`: keduanya dikosongkan.
+            //
+            // `no_warga` karena B-13 menyebutnya hanya berlaku untuk tingkat
+            // warga. `tanggal_naik_warga` karena tanggal basi berbahaya — kalau
+            // orangnya naik warga lagi nanti, fitur 03 akan membaca tanggal
+            // lama dan penagihannya mundur. Nomor kartu fisiknya tetap ada di
+            // tangan yang bersangkutan, jadi bisa diketik ulang saat naik lagi.
+            $member->no_warga = null;
+            $member->tanggal_naik_warga = null;
+        });
     }
 
     /**

@@ -6,6 +6,7 @@ use App\Models\Member;
 use Filament\Actions\Action;
 use Filament\Actions\ViewAction;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
 use Filament\Support\Enums\FontFamily;
 use Filament\Tables\Columns\TextColumn;
@@ -191,6 +192,89 @@ class AnggotaTable
                             ))
                             ->send();
                     }),
+
+                // --- B-2: ubah tingkat keanggotaan & sabuk -------------------
+                //
+                // B-2 mengecualikan Admin, berbeda dari A-7 di bawah yang justru
+                // menyertakannya. Keduanya ada di resource yang sama, jadi jangan
+                // disamakan hanya karena berdekatan.
+                Action::make('ubahTingkatSabuk')
+                    ->label('Tingkat & sabuk')
+                    ->icon(null)
+                    ->visible(fn (): bool => auth()->user()?->can('ubahTingkatDanSabuk', Member::class) ?? false)
+                    ->modalHeading('Ubah tingkat keanggotaan & sabuk')
+                    ->modalSubmitActionLabel('Simpan')
+                    ->fillForm(fn (Member $record): array => [
+                        'tingkat_keanggotaan' => $record->tingkat_keanggotaan,
+                        'tingkatan' => $record->tingkatan,
+                    ])
+                    ->schema([
+                        Select::make('tingkat_keanggotaan')
+                            ->label('Tingkat keanggotaan')
+                            ->options(Member::LABEL_TINGKAT_KEANGGOTAAN)
+                            ->required()
+                            ->native(false)
+                            ->helperText('Naik ke Warga mengisi tanggal naik warga otomatis (B-7). Turun ke Anggota mengosongkan nomor warga dan tanggal itu.'),
+
+                        Select::make('tingkatan')
+                            ->label('Tingkatan sabuk')
+                            ->options(Member::LABEL_TINGKATAN)
+                            ->required()
+                            ->native(false),
+                    ])
+                    ->action(function (Member $record, array $data): void {
+                        $sebelum = $record->labelTingkatKeanggotaan().' · '.$record->labelTingkatan();
+
+                        $record->tingkat_keanggotaan = $data['tingkat_keanggotaan'];
+                        // Lewat mutator `tingkatan` di model, yang mengisi
+                        // tingkatan_urutan. JANGAN menghitung urutannya di sini.
+                        $record->tingkatan = $data['tingkatan'];
+                        $record->save();
+
+                        Notification::make()
+                            ->success()
+                            ->title('Tingkat & sabuk diperbarui')
+                            ->body(sprintf(
+                                '%s: %s → %s · %s.',
+                                $record->user->nama,
+                                $sebelum,
+                                $record->labelTingkatKeanggotaan(),
+                                $record->labelTingkatan(),
+                            ))
+                            ->send();
+                    }),
+
+                // --- B-2 + B-13: nomor kartu tanda warga ---------------------
+                //
+                // Policy isiNoWarga sudah memuat syarat tingkat === 'warga',
+                // jadi tombolnya hilang sendiri pada anggota biasa (B-13).
+                Action::make('isiNoWarga')
+                    ->label('Nomor warga')
+                    ->icon(null)
+                    ->visible(fn (Member $record): bool => auth()->user()?->can('isiNoWarga', $record) ?? false)
+                    ->modalHeading('Isi nomor kartu tanda warga')
+                    ->modalSubmitActionLabel('Simpan')
+                    ->fillForm(fn (Member $record): array => ['no_warga' => $record->no_warga])
+                    ->schema([
+                        TextInput::make('no_warga')
+                            ->label('Nomor warga')
+                            ->helperText('Tepat 8 digit angka, disalin dari kartu tanda warga fisik.')
+                            // Aturan validasinya diambil dari model, sumber yang
+                            // sama dengan yang dipakai halaman profil anggota —
+                            // supaya keduanya tidak pernah berbeda pendapat.
+                            ->rules(fn (Member $record): array => Member::aturanNoWarga($record->id)),
+                    ])
+                    ->action(function (Member $record, array $data): void {
+                        $record->no_warga = $data['no_warga'] ?: null;
+                        $record->save();
+
+                        Notification::make()
+                            ->success()
+                            ->title('Nomor warga disimpan')
+                            ->body($record->user->nama.': '.($record->no_warga ?? 'dikosongkan').'.')
+                            ->send();
+                    }),
+
             ])
             ->toolbarActions([])
             ->emptyStateHeading('Belum ada anggota')

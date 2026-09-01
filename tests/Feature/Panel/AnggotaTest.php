@@ -103,11 +103,11 @@ class AnggotaTest extends TestCase
     }
 
     /**
-     * Aksi B-5 sudah terpasang, sisanya belum. Yang dijaga di sini: sesi ini
-     * TIDAK diam-diam membawa serta B-2 (tingkat & sabuk), B-6 (hak akses),
-     * maupun A-7 (reset kata sandi).
+     * Aksi B-2, B-5, dan A-7 sudah terpasang; B-6 belum. Yang dijaga di sini:
+     * resource ini TIDAK diam-diam membawa serta pengubahan hak akses, dan
+     * tidak pernah punya form sunting yang membuka semua kolom sekaligus.
      */
-    public function test_tabel_belum_punya_aksi_di_luar_b5(): void
+    public function test_tabel_belum_punya_aksi_hak_akses_maupun_sunting(): void
     {
         $this->actingAs($this->penggunaDengan(['is_guru_besar']));
         Member::factory()->create();
@@ -118,9 +118,7 @@ class AnggotaTest extends TestCase
 
         foreach ([
             'edit', 'delete',
-            'ubahTingkat', 'ubahSabuk', 'isiNoWarga',   // B-2
-            'ubahHakAkses',                              // B-6
-            'resetSandi',                                // A-7
+            'ubahHakAkses', 'ubahIsAdmin', 'ubahIsEditor',   // B-6
         ] as $aksi) {
             $komponen->assertTableActionDoesNotExist($aksi);
         }
