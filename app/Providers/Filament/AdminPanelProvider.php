@@ -2,6 +2,7 @@
 
 namespace App\Providers\Filament;
 
+use App\Http\Middleware\PastikanSandiSudahDiganti;
 use Filament\Actions\Action;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
@@ -92,8 +93,21 @@ class AdminPanelProvider extends PanelProvider
                 DisableBladeIconComponents::class,
                 DispatchServingFilamentEvent::class,
             ])
+            // A-8 berlaku di panel juga, bukan hanya di zona anggota.
+            //
+            // Sandi sementara dari A-7 disampaikan lewat WhatsApp — ia melewati
+            // pihak ketiga dan bisa tertinggal di riwayat chat. A-8 memperpendek
+            // umur sandi itu, dan justru pemegang hak akses yang paling berbahaya
+            // kalau akunnya diambil orang. Tanpa baris ini pengurus yang sandinya
+            // baru direset bisa langsung bekerja di /admin tanpa menggantinya.
+            //
+            // PastikanSandiSudahDiganti mengecualikan rute bernama `ganti-sandi.*`
+            // dan `keluar`, jadi jalan keluarnya tetap terbuka. POST /admin/logout
+            // tidak terpengaruh sama sekali: rutenya hidup di routes/web.php di
+            // luar grup panel, dengan middleware `auth` saja.
             ->authMiddleware([
                 Authenticate::class,
+                PastikanSandiSudahDiganti::class,
             ]);
     }
 }
