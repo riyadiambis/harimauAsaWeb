@@ -193,7 +193,15 @@ Seeder dipecah menurut ketergantungannya, dan urutannya diatur di `DatabaseSeede
 | `KeanggotaanUjiSeeder` | nia, tingkat, sabuk, dan ranting untuk akun uji |
 | `StrukturSeeder` | periode kepengurusan dan bagan jabatan |
 
-`DatabaseSeeder` memakai `WithoutModelEvents`, jadi hook model tidak menyala saat seeding — `nia` diberikan manual oleh `KeanggotaanUjiSeeder`, dan proses seeding tidak meninggalkan baris audit. Semua seeder aman dijalankan ulang tanpa `migrate:fresh`.
+Daftar akun uji hidup di **satu tempat**: `AkunUjiSeeder::DAFTAR`. `KeanggotaanUjiSeeder` membaca daftar yang sama, jadi keduanya tidak pernah berbeda pendapat soal siapa akun ujinya dan bagaimana keadaan awalnya.
+
+`WithoutModelEvents` dipasang di **tiap seeder**, bukan hanya di `DatabaseSeeder` — tiap seeder harus aman dijalankan sendirian, dan tanpa itu pemulihan meninggalkan baris audit palsu seolah ada pengurus yang mengubah data. `nia` diberikan manual oleh `KeanggotaanUjiSeeder` karena hook model sengaja tidak menyala.
+
+**Seeder MEMULIHKAN, bukan sekadar melengkapi.** `php artisan db:seed` mengembalikan seluruh akun uji ke keadaan awalnya — status, `nia`, `no_warga`, `tanggal_naik_warga`, tingkat, sabuk, ranting, nama, hak akses, dan `harus_ganti_sandi` — **termasuk mengembalikan nilai ke null** bila keadaan awalnya null. Kalau hanya melengkapi yang kosong, akun uji yang terlanjur diubah lewat panel tidak pernah benar-benar kembali; itu yang sempat terjadi pada `pendingcoba1` — ia disetujui lewat panel, dan `nia`-nya terlanjur terbit padahal ia sengaja dibiarkan pending untuk menguji A-6.
+
+Dua hal yang **tidak** disentuh seeder: akun di luar `AkunUjiSeeder::DAFTAR` (pendaftaran sungguhan lewat `/daftar` aman), dan `nia` yang sudah sah — B-12 menyebutnya tidak berubah lagi setelah diberikan, jadi nomornya tidak diacak ulang tiap seeding.
+
+Dijaga `tests/Feature/SeederIdempotenTest.php`.
 
 ---
 
@@ -241,3 +249,4 @@ Seeder dipecah menurut ketergantungannya, dan urutannya diatur di `DatabaseSeede
 23. Admin dan Editor membuka `/admin/anggota` → daftarnya terbaca (B-17), tapi tombol "Setujui" dan "Ubah status" **tidak tampil sama sekali** (B-5)
 24. Alumni dikembalikan jadi `aktif` → NIA lamanya dipakai lagi, tidak terbit yang baru (B-12: tidak berubah lagi setelah diberikan)
 25. Baris `pending` → hanya punya aksi "Setujui"; "Ubah status" tidak tampil, dan `pending` tidak ada di pilihan statusnya
+26. Ubah akun uji lewat panel atau tinker — status, nia, no_warga, tanggal naik warga, tingkat, sabuk — lalu jalankan `php artisan db:seed` → semuanya kembali ke keadaan awal, termasuk yang harus kembali null; akun di luar daftar akun uji tidak tersentuh

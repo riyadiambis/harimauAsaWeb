@@ -164,3 +164,18 @@ irm https://claude.ai/install.ps1 | iex
 ```
 
 Lalu tutup terminal sepenuhnya dan buka lagi.
+
+
+## Komentar di kode
+
+- Jangan menulis komentar yang mengulang apa yang sudah jelas
+  dari kodenya. Kalau bisa diwakili nama fungsi atau variabel
+  yang baik, pakai itu, jangan komentar
+- Komentar yang menjelaskan KENAPA tetap ditulis, terutama untuk
+  keputusan yang terlihat aneh tanpa penjelasannya, atau yang
+  menutup lubang yang pernah ada. Ujinya: kalau komentarnya
+  dihapus dan kodenya jadi tampak seperti kesalahan, komentar
+  itu harus ada
+- Panjangnya secukupnya. Satu sampai dua baris, bukan paragraf
+- Aturan nomor (A-x, B-x, BR-x) cukup dirujuk nomornya, jangan
+  disalin isinya. Isinya ada di docs/fitur/

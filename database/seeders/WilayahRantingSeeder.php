@@ -4,10 +4,17 @@ namespace Database\Seeders;
 
 use App\Models\Ranting;
 use App\Models\Wilayah;
+use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class WilayahRantingSeeder extends Seeder
 {
+    // Dipasang di seeder ini sendiri, bukan hanya di DatabaseSeeder:
+    // tiap seeder harus aman dijalankan sendirian untuk memulihkan
+    // keadaan, dan tanpa ini pemulihan meninggalkan baris audit palsu
+    // seolah ada pengurus yang mengubah data.
+    use WithoutModelEvents;
+
     /**
      * Data awal sesuai docs/fitur/02-anggota-struktur.md.
      */
