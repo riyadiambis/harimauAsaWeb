@@ -3,12 +3,14 @@
 namespace App\Filament\Resources\Anggota\Tables;
 
 use App\Models\Member;
+use App\Support\SandiSementara;
 use Filament\Actions\Action;
 use Filament\Actions\ViewAction;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
 use Filament\Support\Enums\FontFamily;
+use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
@@ -122,10 +124,26 @@ class AnggotaTable
                     ->searchable()
                     ->preload(),
             ])
+            // Aksi baris memakai tombol ikon bertooltip, bukan teks.
+            //
+            // Lima aksi berlabel teks tidak muat di 1440px: "Reset sandi"
+            // terdorong seluruhnya keluar tepi wadah tabel dan hanya bisa
+            // dicapai dengan menggulung tabel mendatar.
+            //
+            // Ini tidak melanggar larangan ikon di design-tokens: yang
+            // dilarang ikon DEKORATIF sebagai pengisi ruang kosong,
+            // sedangkan ini kontrol fungsional yang punya nama aksesibel.
+            // Panel pengelola pun dikecualikan dari design-tokens oleh spek
+            // fitur 02.
+            //
+            // ActionGroup (dropdown) sengaja TIDAK dipakai: membungkus aksi
+            // di dalamnya membuat closure ->visible() berhenti dievaluasi
+            // per baris, sehingga baris pending ikut menawarkan "Status"
+            // dan baris warga kehilangan "No. warga".
             ->recordActions([
                 ViewAction::make(),
 
-                // --- B-5: menyetujui pendaftar -------------------------------
+                // --- B-5: menyetujui pendaftar ---------------------------
                 //
                 // Aksinya hanya menggeser status. NIA diterbitkan hook `saving`
                 // di model Member (B-12), dan baris auditnya ditulis trait
@@ -135,7 +153,9 @@ class AnggotaTable
                 // menyimpang diam-diam begitu aturannya berubah.
                 Action::make('setujui')
                     ->label('Setujui')
-                    ->icon(null)
+                    ->icon(Heroicon::OutlinedCheckCircle)
+                    ->iconButton()
+                    ->tooltip('Setujui pendaftar')
                     ->color('success')
                     // Policy B-5 sudah memuat syarat status === 'pending', jadi
                     // tombolnya hilang sendiri begitu pendaftarnya disetujui.
@@ -159,8 +179,10 @@ class AnggotaTable
 
                 // --- B-5: mengubah status ------------------------------------
                 Action::make('ubahStatus')
-                    ->label('Ubah status')
-                    ->icon(null)
+                    ->label('Status')
+                    ->icon(Heroicon::OutlinedArrowPath)
+                    ->iconButton()
+                    ->tooltip('Ubah status keanggotaan')
                     ->visible(fn (Member $record): bool => $record->status !== 'pending'
                         && (auth()->user()?->can('ubahStatus', Member::class) ?? false))
                     ->modalHeading('Ubah status keanggotaan')
@@ -199,8 +221,10 @@ class AnggotaTable
                 // menyertakannya. Keduanya ada di resource yang sama, jadi jangan
                 // disamakan hanya karena berdekatan.
                 Action::make('ubahTingkatSabuk')
-                    ->label('Tingkat & sabuk')
-                    ->icon(null)
+                    ->label('Tingkat')
+                    ->icon(Heroicon::OutlinedAcademicCap)
+                    ->iconButton()
+                    ->tooltip('Ubah tingkat & sabuk')
                     ->visible(fn (): bool => auth()->user()?->can('ubahTingkatDanSabuk', Member::class) ?? false)
                     ->modalHeading('Ubah tingkat keanggotaan & sabuk')
                     ->modalSubmitActionLabel('Simpan')
@@ -249,8 +273,10 @@ class AnggotaTable
                 // Policy isiNoWarga sudah memuat syarat tingkat === 'warga',
                 // jadi tombolnya hilang sendiri pada anggota biasa (B-13).
                 Action::make('isiNoWarga')
-                    ->label('Nomor warga')
-                    ->icon(null)
+                    ->label('No. warga')
+                    ->icon(Heroicon::OutlinedIdentification)
+                    ->iconButton()
+                    ->tooltip('Isi nomor kartu tanda warga')
                     ->visible(fn (Member $record): bool => auth()->user()?->can('isiNoWarga', $record) ?? false)
                     ->modalHeading('Isi nomor kartu tanda warga')
                     ->modalSubmitActionLabel('Simpan')
@@ -275,6 +301,43 @@ class AnggotaTable
                             ->send();
                     }),
 
+                // --- A-7: reset kata sandi -----------------------------------
+                //
+                // PERHATIKAN: A-7 menyebut Guru Besar, Sekben Umum, DAN Admin —
+                // berbeda dari B-2 dan B-5 di atas yang mengecualikan Admin.
+                // Policy-nya pun beda objek: resetSandi ada di UserPolicy karena
+                // yang disentuh kolom di `users`, bukan di `members`.
+                Action::make('resetSandi')
+                    ->label('Reset sandi')
+                    ->icon(Heroicon::OutlinedKey)
+                    ->iconButton()
+                    ->tooltip('Reset kata sandi')
+                    ->color('danger')
+                    ->visible(fn (Member $record): bool => auth()->user()?->can('resetSandi', $record->user) ?? false)
+                    ->requiresConfirmation()
+                    ->modalHeading('Reset kata sandi anggota ini?')
+                    ->modalDescription('Sandi lamanya langsung tidak berlaku. Sandi sementara ditampilkan SEKALI sesudah ini — salin dulu sebelum menutupnya, karena tidak bisa dilihat lagi.')
+                    ->modalSubmitActionLabel('Reset')
+                    ->action(function (Member $record): void {
+                        $sandi = SandiSementara::buat();
+
+                        // Model yang memasang dan meng-hash-nya; baris audit
+                        // lahir sendiri dari perubahan harus_ganti_sandi, tanpa
+                        // sandinya (B-10 lewat A-7).
+                        $record->user->pasangSandiSementara($sandi);
+
+                        // Satu-satunya tempat sandi ini pernah muncul. Ia tidak
+                        // disimpan, tidak ditulis ke log, dan tidak ada di audit
+                        // log — begitu notifikasi ini ditutup, ia hilang.
+                        Notification::make()
+                            ->warning()
+                            ->title('Sandi sementara untuk '.$record->user->nama)
+                            ->body($sandi.'
+
+Salin sekarang dan kirim lewat WhatsApp. Dia akan dipaksa menggantinya saat masuk.')
+                            ->persistent()
+                            ->send();
+                    }),
             ])
             ->toolbarActions([])
             ->emptyStateHeading('Belum ada anggota')

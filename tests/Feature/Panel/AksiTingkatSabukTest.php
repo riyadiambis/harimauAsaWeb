@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Panel;
 
+use App\Filament\Resources\Anggota\AnggotaResource;
 use App\Filament\Resources\Anggota\Pages\ListAnggota;
 use App\Models\AuditLog;
 use App\Models\Member;
@@ -339,5 +340,58 @@ class AksiTingkatSabukTest extends TestCase
         $this->assertSame($pengurus->id, (int) $log->actor_id);
         $this->assertNull($log->before['no_warga']);
         $this->assertSame('99998888', $log->after['no_warga']);
+    }
+
+    // --- Visibilitas pada halaman yang BENAR-BENAR dirender ------------------
+
+    /**
+     * Regresi. TestAction mengikat record secara eksplisit, jadi ia tetap hijau
+     * walau tabel yang dirender menampilkan aksi pada baris yang salah. Itu
+     * pernah terjadi: membungkus aksi dalam ActionGroup membuat closure
+     * ->visible() tidak dievaluasi per baris, sehingga baris `pending` ikut
+     * menawarkan "Status" dan baris warga kehilangan "No. warga" — sementara
+     * seluruh tes TestAction tetap lolos.
+     *
+     * Tes ini memeriksa HTML yang keluar, bukan aksi yang dipanggil terpisah.
+     */
+    public function test_visibilitas_per_baris_benar_di_halaman_yang_dirender(): void
+    {
+        $pengurus = $this->penggunaDengan(['is_guru_besar']);
+
+        $pending = Member::factory()->create(['status' => 'pending']);
+        $warga = Member::factory()->warga()->aktif()->create();
+
+        $html = $this->actingAs($pengurus)
+            ->get(AnggotaResource::getUrl('index'))
+            ->getContent();
+
+        // Aksinya tombol ikon, jadi namanya ada di aria-label — bukan
+        // sebagai teks di antara tag.
+        $hitung = fn (string $label): int => substr_count($html, 'aria-label="'.$label.'"');
+
+        // Satu baris pending -> tepat satu "Setujui".
+        $this->assertSame(1, $hitung('Setujui'), 'jumlah tombol Setujui');
+
+        // Satu baris warga -> tepat satu "No. warga".
+        $this->assertSame(1, $hitung('No. warga'), 'jumlah tombol No. warga');
+
+        // Dua baris, satu di antaranya pending -> tepat satu "Status".
+        $this->assertSame(1, $hitung('Status'), 'jumlah tombol Status');
+    }
+
+    /** Aksi B-2 tidak boleh terender sama sekali untuk Admin. */
+    public function test_halaman_admin_tidak_memuat_aksi_b2(): void
+    {
+        $admin = $this->penggunaDengan(['is_admin']);
+        Member::factory()->warga()->aktif()->create();
+
+        $html = $this->actingAs($admin)
+            ->get(AnggotaResource::getUrl('index'))
+            ->getContent();
+
+        $this->assertStringNotContainsString('aria-label="Tingkat"', $html);
+        $this->assertStringNotContainsString('aria-label="No. warga"', $html);
+        // A-7 justru harus ada untuk Admin.
+        $this->assertStringContainsString('aria-label="Reset sandi"', $html);
     }
 }

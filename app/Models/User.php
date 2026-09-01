@@ -45,13 +45,18 @@ class User extends Authenticatable implements FilamentUser, HasName
     ];
 
     /**
-     * B-6: pemberian dan pencabutan hak akses.
+     * B-6: pemberian dan pencabutan hak akses, plus A-7: reset kata sandi.
+     *
+     * `harus_ganti_sandi` ikut diawasi supaya reset kata sandi meninggalkan
+     * jejak — pelaku, target, waktu — tanpa pernah menyentuh sandinya. Kolom
+     * `password` sengaja TIDAK ada di daftar ini: apa pun yang masuk sini ikut
+     * tersalin ke `before`/`after` di audit_logs.
      *
      * @return array<int, string>
      */
     public function kolomDiaudit(): array
     {
-        return ['is_editor', 'is_guru_besar', 'is_sekben', 'is_admin'];
+        return ['is_editor', 'is_guru_besar', 'is_sekben', 'is_admin', 'harus_ganti_sandi'];
     }
 
     /**
@@ -131,6 +136,26 @@ class User extends Authenticatable implements FilamentUser, HasName
     public function canAccessPanel(Panel $panel): bool
     {
         return $this->punyaHakAkses();
+    }
+
+    /**
+     * A-7: memasang sandi sementara dan memaksa penggantiannya.
+     *
+     * Sandinya diterima sebagai teks biasa lalu di-hash oleh cast `hashed`.
+     * Ia TIDAK disimpan, dikembalikan, maupun dicatat di mana pun oleh metode
+     * ini — pemanggilnya yang menampilkannya sekali di layar, lalu melupakannya.
+     *
+     * `harus_ganti_sandi` di luar #[Fillable] karena kolom sensitif tidak boleh
+     * tertembus mass-assignment, jadi diset langsung. Perubahannya diawasi
+     * kolomDiaudit(), sehingga baris audit lahir sendiri dari save() di bawah
+     * (B-10) — berisi fakta bahwa reset terjadi, pelakunya, dan targetnya,
+     * tanpa sandinya.
+     */
+    public function pasangSandiSementara(string $sandiSementara): void
+    {
+        $this->password = $sandiSementara;
+        $this->harus_ganti_sandi = true;
+        $this->save();
     }
 
     /**
