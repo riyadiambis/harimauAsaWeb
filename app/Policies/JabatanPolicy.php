@@ -10,6 +10,16 @@ use App\Models\User;
  */
 class JabatanPolicy
 {
+    public function viewAny(User $user): bool
+    {
+        return $this->create($user);
+    }
+
+    public function view(User $user, Jabatan $jabatan): bool
+    {
+        return $this->create($user);
+    }
+
     public function create(User $user): bool
     {
         return $user->is_guru_besar || $user->is_sekben;

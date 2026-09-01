@@ -132,7 +132,7 @@ Ditegakkan lewat foreign key, bukan hanya di kode:
 - **B-7** Naik ke tingkat `warga` mengisi `tanggal_naik_warga`. Penagihan kas dimulai **bulan berikutnya**, tidak pernah bulan berjalan — walau naiknya tanggal 1
 - **B-8** Hanya boleh ada satu `periode_kepengurusan` dengan `aktif = true`. Menandai periode baru aktif otomatis menonaktifkan yang lama
 - **B-9** Periode lama tidak dihapus — jadi arsip yang bisa dilihat
-- **B-10** Semua perubahan pada B-2, B-4, B-5, B-6, dan B-16 wajib menulis audit log (pelaku, waktu, nilai sebelum, nilai sesudah). Untuk wilayah dan ranting, pembuatan dan penghapusan ikut dicatat — bukan hanya penyuntingan — karena menghapus ranting membuat `members.ranting_id` anggotanya jadi null tanpa jejak lain
+- **B-10** Semua perubahan pada B-2, B-4, B-5, B-6, dan B-16 wajib menulis audit log (pelaku, waktu, nilai sebelum, nilai sesudah). Untuk wilayah, ranting, periode kepengurusan, dan jabatan, pembuatan dan penghapusan ikut dicatat — bukan hanya penyuntingan. Menghapus ranting membuat `members.ranting_id` anggotanya jadi null tanpa jejak lain, dan pada periode kepengurusan "kapan ia dibuat lalu dinonaktifkan" justru bagian dari arsipnya (B-9)
 - **B-11** `riwayat_guru_besar` sengaja terpisah dan diisi manual, karena Guru Besar lama dari masa sebelum sistem ini ada tidak punya akun dan tidak bisa ditarik otomatis dari tabel `jabatan`
 - **B-12** Format `nia`: **tahun bergabung + nomor urut empat digit**, contoh `2026-0001`. Nomor urut dihitung per tahun dan mulai lagi dari 1 tiap ganti tahun. Digenerate sistem saat status beranjak dari `pending` (B-1), tidak pernah diketik manual, dan tidak berubah lagi setelah diberikan
 - **B-13** `no_warga`: **tepat 8 digit angka**, unik. Berbeda dari `nia`, nomor ini **tidak digenerate** — datanya berasal dari kartu tanda warga fisik yang sudah dimiliki, jadi **diisi manual oleh anggota sendiri** lewat halaman profilnya. Guru Besar dan Sekben tetap bisa mengisikannya juga (B-2 tidak dicabut). Hanya berlaku untuk `tingkat_keanggotaan = warga`
@@ -147,6 +147,7 @@ Ditegakkan lewat foreign key, bukan hanya di kode:
 
   > **Belum diimplementasikan.** B-18 baru aturan; enum `ditolak`, kolom `audit_logs.alasan`, perubahan hook `nia`, pesan A-12 ketiga, dan penyaringan di `/struktur` semuanya belum ada di kode.
 
+- **B-19** **Rantai atasan jabatan tidak boleh melingkar.** Sebuah jabatan tidak bisa jadi atasan dirinya sendiri, dan tidak bisa mengambil atasan dari bawahannya sendiri — ditelusuri sampai akar, bukan sekadar membandingkan tetangga langsung, sehingga A→B→A maupun rantai yang lebih panjang sama-sama ditolak. Alasannya bukan kerapian: bagan `/struktur` (fitur 09) menelusuri `parent_id` secara rekursif, dan satu lingkaran membuatnya berputar tanpa ujung. Pemilihan atasan juga dibatasi **satu periode** — atasan lintas periode tidak masuk akal karena bagan terikat masa bakti. Dijaga di model `Jabatan` supaya panel, tinker, dan seeder sama-sama tertutup
 > **Jalur menolak pendaftar belum ada di kode.** Aturannya sudah ditulis di B-18, tapi belum diimplementasikan. Sampai itu dikerjakan, aksi "Ubah status" sengaja **tidak tampil** pada baris `pending` — memakai `non_aktif` sebagai penolakan dadakan akan menerbitkan NIA untuk orang yang tidak pernah disetujui (lihat alasannya di B-18). Pendaftar yang tidak dikehendaki dibiarkan `pending`; A-6 sudah menahannya di halaman masuk.
 
 ---
@@ -155,7 +156,7 @@ Ditegakkan lewat foreign key, bukan hanya di kode:
 
 **`/admin/anggota`** — daftar anggota dengan filter tingkat, sabuk, status, ranting. Aksi: setujui pendaftar, ubah status, ubah tingkat & sabuk (khusus Guru Besar/Sekben), reset kata sandi.
 
-**`/admin/struktur`** — kelola periode kepengurusan dan jabatan. Bagan bisa disusun dengan memilih atasan (`parent_id`) tiap jabatan.
+**`/admin/periode`** dan **`/admin/jabatan`** — kelola periode kepengurusan dan jabatan, dikelompokkan sebagai "Struktur" di navigasi panel. Bagan disusun dengan memilih atasan (`parent_id`) tiap jabatan; pilihannya dibatasi satu periode dan tidak boleh melingkar (B-19).
 
 **`/admin/wilayah`** — kelola wilayah dan ranting.
 
@@ -218,8 +219,10 @@ Dijaga `tests/Feature/SeederIdempotenTest.php`.
 - [x] Panel kelola wilayah & ranting (B-16), dengan penolakan hapus induk yang terbaca
 - [x] Panel anggota: daftar & lihat saja (B-17), tanpa aksi yang mengubah data
 - [x] Panel anggota: aksi setujui pendaftar & ubah status (B-5)
-- [ ] Panel anggota: ubah tingkat & sabuk (B-2), ubah hak akses (B-6), reset kata sandi (A-7)
-- [ ] Panel kelola struktur dan riwayat Guru Besar
+- [x] Panel anggota: ubah tingkat & sabuk dan nomor warga (B-2), reset kata sandi (A-7)
+- [ ] Panel anggota: ubah hak akses (B-6)
+- [x] Panel kelola struktur: periode kepengurusan (B-8, B-9) dan jabatan (B-3, B-19)
+- [ ] Panel kelola riwayat Guru Besar
 - [x] Seeder data awal
 
 ## Skenario uji
@@ -250,3 +253,7 @@ Dijaga `tests/Feature/SeederIdempotenTest.php`.
 24. Alumni dikembalikan jadi `aktif` → NIA lamanya dipakai lagi, tidak terbit yang baru (B-12: tidak berubah lagi setelah diberikan)
 25. Baris `pending` → hanya punya aksi "Setujui"; "Ubah status" tidak tampil, dan `pending` tidak ada di pilihan statusnya
 26. Ubah akun uji lewat panel atau tinker — status, nia, no_warga, tanggal naik warga, tingkat, sabuk — lalu jalankan `php artisan db:seed` → semuanya kembali ke keadaan awal, termasuk yang harus kembali null; akun di luar daftar akun uji tidak tersentuh
+27. Jadikan sebuah jabatan atasan dirinya sendiri → ditolak; A→B lalu B dijadikan atasan A → ditolak; rantai lebih panjang (A→B→C lalu C dijadikan atasan A) → ditolak juga (B-19)
+28. Pilihan atasan sebuah jabatan → hanya memuat jabatan sePeriode, tanpa dirinya sendiri dan tanpa seluruh bawahannya
+29. Hapus periode yang masih punya jabatan lewat panel → notifikasi terbaca, bukan galat SQL; periode kosong → terhapus (B-9)
+30. Hapus jabatan induk → bawahannya tetap ada dengan `parent_id` null, tidak ikut terhapus
