@@ -2,10 +2,12 @@
 
 namespace Tests\Feature\Keanggotaan;
 
+use App\Exceptions\HapusIndukException;
 use App\Models\Jabatan;
 use App\Models\PeriodeKepengurusan;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 class StrukturTest extends TestCase
@@ -89,14 +91,53 @@ class StrukturTest extends TestCase
         $this->assertNull($anak->fresh()->parent_id);
     }
 
-    /** B-9 dijaga foreign key: periode yang masih punya jabatan tidak bisa dihapus. */
+    /** B-9: periode yang masih punya jabatan tidak bisa dihapus. */
     public function test_periode_yang_masih_punya_jabatan_tidak_bisa_dihapus(): void
+    {
+        $periode = PeriodeKepengurusan::factory()->create(['nama' => 'Kepengurusan 2015-2016']);
+        Jabatan::factory()->create(['periode_id' => $periode->id]);
+
+        $this->expectException(HapusIndukException::class);
+        $this->expectExceptionMessage('masih punya 1 jabatan');
+
+        $periode->delete();
+    }
+
+    /** Pesannya terbaca pengurus, bukan SQLSTATE. */
+    public function test_pesan_penolakan_periode_terbaca(): void
+    {
+        $periode = PeriodeKepengurusan::factory()->create(['nama' => 'Kepengurusan 2015-2016']);
+        Jabatan::factory()->count(2)->create(['periode_id' => $periode->id]);
+
+        try {
+            $periode->delete();
+            $this->fail('penghapusan seharusnya ditolak');
+        } catch (HapusIndukException $e) {
+            $this->assertStringContainsString('Kepengurusan 2015-2016', $e->getMessage());
+            $this->assertStringContainsString('2 jabatan', $e->getMessage());
+            $this->assertStringNotContainsString('SQLSTATE', $e->getMessage());
+        }
+
+        $this->assertModelExists($periode);
+    }
+
+    /** Database tetap jaring terakhir untuk jalur yang tidak lewat Eloquent. */
+    public function test_foreign_key_periode_tetap_menolak_di_level_database(): void
     {
         $periode = PeriodeKepengurusan::factory()->create();
         Jabatan::factory()->create(['periode_id' => $periode->id]);
 
         $this->expectException(QueryException::class);
 
+        DB::table('periode_kepengurusan')->where('id', $periode->id)->delete();
+    }
+
+    public function test_periode_tanpa_jabatan_boleh_dihapus(): void
+    {
+        $periode = PeriodeKepengurusan::factory()->create();
+
         $periode->delete();
+
+        $this->assertModelMissing($periode);
     }
 }

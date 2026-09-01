@@ -15,6 +15,15 @@ use RuntimeException;
  */
 class HapusIndukException extends RuntimeException
 {
+    public static function periodeMasihPunyaJabatan(string $nama, int $jumlah): self
+    {
+        return new self(
+            "Periode \"{$nama}\" masih punya {$jumlah} jabatan. "
+            .'Hapus jabatannya lebih dulu, atau nonaktifkan periodenya saja — '
+            .'periode lama memang disimpan sebagai arsip (B-9).'
+        );
+    }
+
     public static function wilayahMasihPunyaRanting(string $nama, int $jumlah): self
     {
         return new self(

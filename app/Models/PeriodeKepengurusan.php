@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Exceptions\HapusIndukException;
+use App\Models\Concerns\MencatatAudit;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Table;
 use Illuminate\Database\Eloquent\Builder;
@@ -13,7 +15,27 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 #[Fillable(['nama', 'tahun_mulai', 'tahun_selesai', 'aktif'])]
 class PeriodeKepengurusan extends Model
 {
-    use HasFactory;
+    use HasFactory, MencatatAudit;
+
+    /**
+     * B-10 lewat B-4: periode adalah wadah jabatan, jadi perubahannya ikut
+     * dicatat. Pembuatan dan penghapusan ikut karena B-8 dan B-9 membuat
+     * "kapan periode ini dibuat dan dinonaktifkan" jadi bagian arsipnya.
+     *
+     * @return array<int, string>
+     */
+    public function kolomDiaudit(): array
+    {
+        return ['nama', 'tahun_mulai', 'tahun_selesai', 'aktif'];
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    public function peristiwaDiaudit(): array
+    {
+        return ['created', 'updated', 'deleted'];
+    }
 
     /**
      * @return array<string, string>
@@ -46,6 +68,16 @@ class PeriodeKepengurusan extends Model
                 ->whereKeyNot($periode->getKey())
                 ->where('aktif', true)
                 ->update(['aktif' => false]);
+        });
+
+        // Foreign key sudah menolak, tapi galatnya SQLSTATE[23000] yang tidak
+        // bisa dibaca pengurus.
+        static::deleting(function (self $periode): void {
+            $jumlah = $periode->jabatan()->count();
+
+            if ($jumlah > 0) {
+                throw HapusIndukException::periodeMasihPunyaJabatan($periode->nama, $jumlah);
+            }
         });
     }
 
