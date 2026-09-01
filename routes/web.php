@@ -6,29 +6,22 @@ use App\Http\Controllers\Auth\GantiSandiController;
 use App\Http\Controllers\Auth\MasukController;
 use Illuminate\Support\Facades\Route;
 
-// SEMENTARA. Beranda publik sungguhan dikerjakan di fitur 11 dan dasbor anggota
-// di fitur 07; sampai keduanya ada, rute ini hanya mengarahkan orang ke tempat
-// yang masuk akal. Jangan dibiarkan jadi permanen.
+// Beranda PUBLIK. Tidak ada middleware auth di sini, dan jangan ditambahkan.
 //
-// TODO fitur 11: ganti dengan beranda publik (hero slider, galeri, konten).
+// Aplikasi ini web profil perguruan yang sekaligus memuat portal anggota —
+// sisi publiknya separuh alasan project ini ada (PRD bagian 1 dan bagian 3
+// nomor 4), bukan pelengkap di belakang login. Peta situs PRD bagian 7 menaruh
+// /, /profil, /struktur, /artikel, /pengumuman, /galeri, /daftar, dan /masuk
+// di zona publik. Zona anggota dan /admin yang butuh login, bukan sebaliknya.
 //
-// Pengalihannya bersyarat, bukan `redirect('/masuk')` polos: /masuk ada di grup
-// `guest`, dan RedirectIfAuthenticated memantulkan pengguna yang sudah masuk
-// kembali ke / karena tidak ada rute bernama `dashboard` atau `home`. Pengalihan
-// tanpa syarat menghasilkan loop tak berujung persis saat orang berhasil masuk.
-Route::get('/', function () {
-    if (! auth()->check()) {
-        return redirect()->route('masuk');
-    }
-
-    // B-15: yang berhak langsung dibawa ke panel. Sisanya ditahan halaman
-    // sementara sampai dasbor anggota (fitur 07) ada.
-    if (auth()->user()->punyaHakAkses()) {
-        return redirect('/admin');
-    }
-
-    return view('beranda-sementara');
-})->name('beranda');
+// Tidak ada pengalihan otomatis ke /admin bagi pemegang hak akses: semua orang
+// melihat halaman yang sama, dan panel dicapai lewat tautan. Melempar orang
+// keluar dari halaman publik menanamkan asumsi bahwa aplikasi ini tertutup, dan
+// asumsi itu akan merembet saat halaman publik lain dikerjakan.
+//
+// TODO fitur 11: ganti dengan beranda publik sungguhan (hero slider,
+// pengumuman, artikel, galeri). View-nya ikut diganti utuh.
+Route::view('/', 'beranda')->name('beranda');
 
 Route::middleware('guest')->group(function () {
     Route::get('/daftar', [DaftarController::class, 'create'])->name('daftar');

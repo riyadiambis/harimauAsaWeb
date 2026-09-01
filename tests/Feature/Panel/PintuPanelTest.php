@@ -6,7 +6,6 @@ use App\Http\Controllers\Auth\MasukController;
 use App\Models\User;
 use Filament\Facades\Filament;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Auth;
 use Tests\TestCase;
 
 /**
@@ -76,69 +75,15 @@ class PintuPanelTest extends TestCase
     }
 
     // --- 2. Jalan menuju panel -----------------------------------------------
-
-    /**
-     * Rute / bersyarat, bukan pengalihan polos ke /masuk. /masuk ada di grup
-     * `guest`, dan RedirectIfAuthenticated memantulkan pengguna yang sudah
-     * masuk kembali ke / karena tidak ada rute bernama `dashboard` atau `home`.
-     * Pengalihan tanpa syarat menghasilkan loop tak berujung.
-     */
-    public function test_tamu_diarahkan_ke_halaman_masuk_dari_beranda(): void
-    {
-        $this->get('/')->assertRedirect(route('masuk'));
-    }
-
-    public function test_pemegang_hak_akses_diantar_langsung_ke_panel(): void
-    {
-        $editor = $this->penggunaDengan(['is_editor']);
-
-        $this->actingAs($editor)->get('/')->assertRedirect('/admin');
-    }
-
-    /** Keempat bendera sama-sama diantar ke panel. */
-    public function test_setiap_pemegang_hak_akses_diantar_ke_panel(): void
-    {
-        foreach (['is_editor', 'is_guru_besar', 'is_sekben', 'is_admin'] as $bendera) {
-            $user = $this->penggunaDengan([$bendera]);
-
-            $this->actingAs($user)->get('/')->assertRedirect('/admin');
-
-            Auth::logout();
-        }
-    }
-
-    /**
-     * Anggota biasa ditahan halaman sementara — bukan diarahkan ke /admin yang
-     * akan menolaknya 403, dan bukan ke /masuk yang akan memantulkannya balik.
-     */
-    public function test_anggota_biasa_mendapat_halaman_sementara(): void
-    {
-        $anggota = $this->penggunaDengan([]);
-
-        $this->actingAs($anggota)->get('/')
-            ->assertSuccessful()
-            ->assertSee('Dasbor anggota belum tersedia')
-            ->assertDontSee('href="'.url('/admin').'"', false);
-    }
-
-    /** Tidak ada loop: yang sudah masuk tidak pernah dipantulkan ke / lagi. */
-    public function test_tidak_ada_loop_pengalihan_sesudah_masuk(): void
-    {
-        $anggota = $this->penggunaDengan([]);
-
-        $this->actingAs($anggota)->get('/')->assertSuccessful();
-
-        // /masuk memang memantulkan yang sudah masuk, tapi ke halaman yang
-        // merender — bukan kembali ke pengalihan.
-        $this->actingAs($anggota)->get(route('masuk'))->assertRedirect('/');
-        $this->actingAs($anggota)->get('/')->assertSuccessful();
-    }
+    //
+    // Tautan menuju /admin di beranda diuji di tests/Feature/BerandaTest.php,
+    // bersama sisa perilaku halaman publik itu.
 
     /**
      * Tautan dan pintu memakai pemeriksaan yang sama, jadi tidak mungkin ada
-     * orang yang diantar ke panel tapi ditolak di pintunya, atau sebaliknya.
+     * orang yang melihat tautan panel tapi ditolak di pintunya, atau sebaliknya.
      */
-    public function test_pengantaran_dan_pintu_sepakat(): void
+    public function test_tautan_dan_pintu_sepakat(): void
     {
         $panel = Filament::getPanel('admin');
 

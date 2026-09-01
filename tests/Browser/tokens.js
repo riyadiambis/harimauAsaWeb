@@ -18,6 +18,8 @@ export const PALET = {
 };
 
 export const HALAMAN = [
+    // Beranda publik — dibuka tanpa akun.
+    { nama: 'beranda', jalur: '/' },
     { nama: 'masuk', jalur: '/masuk' },
     { nama: 'daftar', jalur: '/daftar' },
     { nama: 'daftar-selesai', jalur: '/daftar/selesai' },

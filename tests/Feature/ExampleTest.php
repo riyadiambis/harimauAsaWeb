@@ -7,12 +7,11 @@ use Tests\TestCase;
 class ExampleTest extends TestCase
 {
     /**
-     * Rute / tidak lagi merender halaman: sampai fitur 07 dan 11 dikerjakan ia
-     * hanya mengarahkan orang ke tempat yang masuk akal. Perilaku lengkapnya
-     * diuji di tests/Feature/Panel/PintuPanelTest.php.
+     * Beranda PUBLIK — terbuka tanpa akun. Perilaku lengkapnya diuji di
+     * tests/Feature/BerandaTest.php.
      */
-    public function test_beranda_mengarahkan_tamu_ke_halaman_masuk(): void
+    public function test_beranda_terbuka_untuk_tamu(): void
     {
-        $this->get('/')->assertRedirect(route('masuk'));
+        $this->get('/')->assertSuccessful();
     }
 }
