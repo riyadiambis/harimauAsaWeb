@@ -15,15 +15,20 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Model;
 
 /**
- * Daftar dan rincian anggota. HANYA BACA.
+ * Daftar dan rincian anggota.
  *
- * Tidak ada halaman buat maupun sunting, dan tidak ada satu pun aksi yang
- * mengubah data — setujui pendaftar, ubah status, ubah tingkat & sabuk, serta
- * reset kata sandi dikerjakan terpisah supaya masing-masing bisa dijaga policy
- * dan audit lognya sendiri (B-2, B-5, B-6, B-10).
- *
- * Hak bacanya B-17: semua yang lolos gerbang panel B-15, termasuk Editor.
+ * Hak BACA-nya B-17: semua yang lolos gerbang panel B-15, termasuk Editor.
  * Ditegakkan MemberPolicy::viewAny() dan view().
+ *
+ * Hak UBAH dipisah tegas dan dijaga policy masing-masing:
+ *   - B-5 (sudah ada)  setujui pendaftar, ubah status — Guru Besar & Sekben
+ *   - B-2 (belum)      ubah tingkat keanggotaan, sabuk, no_warga
+ *   - B-6 (belum)      ubah kolom hak akses — Admin saja
+ *   - A-7 (belum)      reset kata sandi
+ *
+ * Tidak ada halaman buat maupun sunting: anggota lahir dari pendaftaran publik
+ * (A-2), dan setiap perubahan lewat aksi bertarget yang punya policy sendiri —
+ * bukan satu form sunting yang membuka semua kolom sekaligus.
  */
 class AnggotaResource extends Resource
 {

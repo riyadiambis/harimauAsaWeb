@@ -141,6 +141,8 @@ Ditegakkan lewat foreign key, bukan hanya di kode:
 - **B-16** Yang berhak mengelola `wilayah` dan `ranting`: **Guru Besar dan Sekben Umum saja** — sama seperti B-4, karena wilayah dan ranting adalah struktur organisasi yang sejenis dengan bagan kepengurusan. Admin tidak bisa, kecuali dia juga memegang salah satu bendera itu. Editor lolos gerbang B-15 dan boleh masuk panel, tapi tidak melihat menu wilayah/ranting sama sekali
 - **B-17** Yang boleh **melihat** daftar dan rincian anggota di `/admin/anggota`: **semua yang lolos gerbang B-15**, yaitu pemegang minimal satu hak akses — termasuk Editor. Membaca sengaja dipisah tegas dari mengubah: B-2, B-5, dan B-6 mengatur siapa boleh MENGUBAH dan tidak ikut melonggar oleh aturan ini. Perlu disadari daftar ini memuat data pribadi seluruh anggota (nama, NIA, status, ranting)
 
+> **Tidak ada jalur menolak pendaftar.** Enum `status` hanya punya `pending|aktif|non_aktif|alumni`, dan B-5 hanya menyebut "menyetujui pendaftar". Karena itu aksi "Ubah status" sengaja **tidak tampil** pada baris `pending`: hook penerbitan `nia` menyala pada **setiap** perpindahan keluar dari `pending`, jadi memakai `non_aktif` sebagai penolakan akan menerbitkan NIA untuk orang yang tidak pernah disetujui — bertentangan dengan B-1. Pendaftar yang tidak dikehendaki dibiarkan `pending`; A-6 sudah menahannya di halaman masuk. Kalau jalur tolak sungguhan dibutuhkan, ia perlu nilai enum sendiri dan aturannya sendiri.
+
 ---
 
 ## Halaman pengelola
@@ -201,7 +203,8 @@ Seeder dipecah menurut ketergantungannya, dan urutannya diatur di `DatabaseSeede
 - [x] Kerangka panel Filament di `/admin` dengan gerbang akses B-15
 - [x] Panel kelola wilayah & ranting (B-16), dengan penolakan hapus induk yang terbaca
 - [x] Panel anggota: daftar & lihat saja (B-17), tanpa aksi yang mengubah data
-- [ ] Panel anggota: aksi setujui, ubah status, ubah tingkat & sabuk, reset kata sandi
+- [x] Panel anggota: aksi setujui pendaftar & ubah status (B-5)
+- [ ] Panel anggota: ubah tingkat & sabuk (B-2), ubah hak akses (B-6), reset kata sandi (A-7)
 - [ ] Panel kelola struktur dan riwayat Guru Besar
 - [x] Seeder data awal
 
@@ -228,3 +231,7 @@ Seeder dipecah menurut ketergantungannya, dan urutannya diatur di `DatabaseSeede
 19. Daftar anggota diurutkan bawaan menurut `tingkatan_urutan` menurun → Putih Warga 3 paling atas, Hitam/Polos paling bawah (lihat skenario 2)
 20. Anggota `pending` tampil di daftar dengan NIA kosong yang terbaca wajar, bukan seperti data rusak (B-1)
 21. Editor membuka `/admin/anggota` → boleh membaca (B-17); tapi tidak menemukan satu pun aksi yang mengubah data
+22. Guru Besar/Sekben menyetujui pendaftar lewat panel → status jadi `aktif` dan NIA terbit lewat hook yang sama dengan jalur Tinker, melanjutkan deret tahun itu (B-5, B-12)
+23. Admin dan Editor membuka `/admin/anggota` → daftarnya terbaca (B-17), tapi tombol "Setujui" dan "Ubah status" **tidak tampil sama sekali** (B-5)
+24. Alumni dikembalikan jadi `aktif` → NIA lamanya dipakai lagi, tidak terbit yang baru (B-12: tidak berubah lagi setelah diberikan)
+25. Baris `pending` → hanya punya aksi "Setujui"; "Ubah status" tidak tampil, dan `pending` tidak ada di pilihan statusnya

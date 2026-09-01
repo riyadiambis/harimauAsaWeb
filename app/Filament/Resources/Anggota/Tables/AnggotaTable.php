@@ -3,8 +3,10 @@
 namespace App\Filament\Resources\Anggota\Tables;
 
 use App\Models\Member;
-use App\Models\Ranting;
+use Filament\Actions\Action;
 use Filament\Actions\ViewAction;
+use Filament\Forms\Components\Select;
+use Filament\Notifications\Notification;
 use Filament\Support\Enums\FontFamily;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
@@ -12,6 +14,20 @@ use Filament\Tables\Table;
 
 class AnggotaTable
 {
+    /**
+     * Pilihan status untuk aksi "Ubah status" (B-5).
+     *
+     * `pending` sengaja TIDAK ada di sini. Status itu hanya bisa ditinggalkan
+     * lewat aksi "Setujui pendaftar", dan tidak ada jalan kembali ke sana —
+     * spek tidak punya jalur menolak pendaftar, jadi tidak dikarang di sini.
+     *
+     * @return array<string, string>
+     */
+    private static function pilihanStatus(): array
+    {
+        return array_diff_key(Member::LABEL_STATUS, ['pending' => null]);
+    }
+
     public static function configure(Table $table): Table
     {
         return $table
@@ -105,9 +121,76 @@ class AnggotaTable
                     ->searchable()
                     ->preload(),
             ])
-            // Satu-satunya aksi: melihat. Tidak ada yang mengubah data.
             ->recordActions([
                 ViewAction::make(),
+
+                // --- B-5: menyetujui pendaftar -------------------------------
+                //
+                // Aksinya hanya menggeser status. NIA diterbitkan hook `saving`
+                // di model Member (B-12), dan baris auditnya ditulis trait
+                // MencatatAudit (B-10) — keduanya jalur yang sama dengan yang
+                // dipakai Tinker dan seeder. Tidak ada logika penomoran maupun
+                // pencatatan yang ditulis ulang di sini; kalau ada, ia akan
+                // menyimpang diam-diam begitu aturannya berubah.
+                Action::make('setujui')
+                    ->label('Setujui')
+                    ->icon(null)
+                    ->color('success')
+                    // Policy B-5 sudah memuat syarat status === 'pending', jadi
+                    // tombolnya hilang sendiri begitu pendaftarnya disetujui.
+                    // Aksi yang tidak diizinkan TIDAK TAMPIL, bukan tampil lalu
+                    // gagal saat diklik.
+                    ->visible(fn (Member $record): bool => auth()->user()?->can('setujui', $record) ?? false)
+                    ->requiresConfirmation()
+                    ->modalHeading('Setujui pendaftar ini?')
+                    ->modalDescription('Statusnya menjadi aktif dan NIA-nya terbit. NIA tidak berubah lagi setelah diberikan.')
+                    ->modalSubmitActionLabel('Setujui')
+                    ->action(function (Member $record): void {
+                        $record->status = 'aktif';
+                        $record->save();
+
+                        Notification::make()
+                            ->success()
+                            ->title('Pendaftar disetujui')
+                            ->body("NIA {$record->fresh()->nia} diterbitkan untuk {$record->user->nama}.")
+                            ->send();
+                    }),
+
+                // --- B-5: mengubah status ------------------------------------
+                Action::make('ubahStatus')
+                    ->label('Ubah status')
+                    ->icon(null)
+                    ->visible(fn (Member $record): bool => $record->status !== 'pending'
+                        && (auth()->user()?->can('ubahStatus', Member::class) ?? false))
+                    ->modalHeading('Ubah status keanggotaan')
+                    ->modalSubmitActionLabel('Simpan')
+                    ->fillForm(fn (Member $record): array => ['status' => $record->status])
+                    ->schema([
+                        Select::make('status')
+                            ->label('Status')
+                            ->options(self::pilihanStatus())
+                            ->required()
+                            ->native(false)
+                            // A-12: keduanya menutup akses masuk, jadi pengurus
+                            // perlu tahu akibatnya sebelum menyimpan.
+                            ->helperText('Non-aktif dan alumni sama-sama menutup akses masuk (A-12).'),
+                    ])
+                    ->action(function (Member $record, array $data): void {
+                        $sebelum = $record->status;
+                        $record->status = $data['status'];
+                        $record->save();
+
+                        Notification::make()
+                            ->success()
+                            ->title('Status diperbarui')
+                            ->body(sprintf(
+                                '%s: %s → %s.',
+                                $record->user->nama,
+                                Member::LABEL_STATUS[$sebelum] ?? $sebelum,
+                                $record->labelStatus(),
+                            ))
+                            ->send();
+                    }),
             ])
             ->toolbarActions([])
             ->emptyStateHeading('Belum ada anggota')
