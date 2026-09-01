@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\MencatatAudit;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Table;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -13,7 +14,28 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 #[Fillable(['wilayah_id', 'nama', 'urutan'])]
 class Ranting extends Model
 {
-    use HasFactory;
+    use HasFactory, MencatatAudit;
+
+    /**
+     * B-10 lewat B-16.
+     *
+     * @return array<int, string>
+     */
+    public function kolomDiaudit(): array
+    {
+        return ['wilayah_id', 'nama', 'urutan'];
+    }
+
+    /**
+     * Penghapusan wajib tercatat: ranting yang hilang membuat
+     * `members.ranting_id` anggotanya jadi null tanpa meninggalkan jejak lain.
+     *
+     * @return array<int, string>
+     */
+    public function peristiwaDiaudit(): array
+    {
+        return ['created', 'updated', 'deleted'];
+    }
 
     /**
      * @return BelongsTo<Wilayah, $this>

@@ -132,12 +132,13 @@ Ditegakkan lewat foreign key, bukan hanya di kode:
 - **B-7** Naik ke tingkat `warga` mengisi `tanggal_naik_warga`. Penagihan kas dimulai **bulan berikutnya**, tidak pernah bulan berjalan — walau naiknya tanggal 1
 - **B-8** Hanya boleh ada satu `periode_kepengurusan` dengan `aktif = true`. Menandai periode baru aktif otomatis menonaktifkan yang lama
 - **B-9** Periode lama tidak dihapus — jadi arsip yang bisa dilihat
-- **B-10** Semua perubahan pada B-2, B-4, B-5, dan B-6 wajib menulis audit log (pelaku, waktu, nilai sebelum, nilai sesudah)
+- **B-10** Semua perubahan pada B-2, B-4, B-5, B-6, dan B-16 wajib menulis audit log (pelaku, waktu, nilai sebelum, nilai sesudah). Untuk wilayah dan ranting, pembuatan dan penghapusan ikut dicatat — bukan hanya penyuntingan — karena menghapus ranting membuat `members.ranting_id` anggotanya jadi null tanpa jejak lain
 - **B-11** `riwayat_guru_besar` sengaja terpisah dan diisi manual, karena Guru Besar lama dari masa sebelum sistem ini ada tidak punya akun dan tidak bisa ditarik otomatis dari tabel `jabatan`
 - **B-12** Format `nia`: **tahun bergabung + nomor urut empat digit**, contoh `2026-0001`. Nomor urut dihitung per tahun dan mulai lagi dari 1 tiap ganti tahun. Digenerate sistem saat status beranjak dari `pending` (B-1), tidak pernah diketik manual, dan tidak berubah lagi setelah diberikan
 - **B-13** `no_warga`: **tepat 8 digit angka**, unik. Berbeda dari `nia`, nomor ini **tidak digenerate** — datanya berasal dari kartu tanda warga fisik yang sudah dimiliki, jadi **diisi manual oleh anggota sendiri** lewat halaman profilnya. Guru Besar dan Sekben tetap bisa mengisikannya juga (B-2 tidak dicabut). Hanya berlaku untuk `tingkat_keanggotaan = warga`
 - **B-14** Sistem harus **selalu punya minimal satu Admin**. Dua pagar: (a) Admin tidak bisa mencabut `is_admin` miliknya sendiri — harus lewat Admin lain; (b) `is_admin` terakhir tidak bisa dicabut, dan akun Admin terakhir tidak bisa dihapus. Dijaga di level model supaya tidak ada jalur yang bisa melanggarnya, sebab sekali dilanggar tidak ada lagi yang berwenang mengatur hak akses dan pemulihannya harus lewat database langsung
 - **B-15** Yang boleh membuka panel pengelola `/admin` adalah pengguna yang punya **minimal satu dari empat kolom hak akses** bernilai true (`is_editor`, `is_guru_besar`, `is_sekben`, `is_admin`). Anggota tanpa hak akses apa pun ditolak di pintu panel. Ini **gerbang masuk saja** — apa yang boleh dilakukan di dalamnya tetap ditentukan policy B-2, B-4, B-5, dan B-6, jadi Editor yang lolos masuk tetap tidak bisa mengubah sabuk atau hak akses siapa pun. Ditegakkan lewat `canAccessPanel()` di model `User`
+- **B-16** Yang berhak mengelola `wilayah` dan `ranting`: **Guru Besar dan Sekben Umum saja** — sama seperti B-4, karena wilayah dan ranting adalah struktur organisasi yang sejenis dengan bagan kepengurusan. Admin tidak bisa, kecuali dia juga memegang salah satu bendera itu. Editor lolos gerbang B-15 dan boleh masuk panel, tapi tidak melihat menu wilayah/ranting sama sekali
 
 ---
 
@@ -197,7 +198,8 @@ Seeder dipecah menurut ketergantungannya, dan urutannya diatur di `DatabaseSeede
 - [x] Policy/gate sesuai B-2, B-4, B-5, B-6, dan pagar Admin B-14
 - [x] Audit log tertulis untuk semua perubahan di B-10
 - [x] Kerangka panel Filament di `/admin` dengan gerbang akses B-15
-- [ ] Panel kelola anggota, struktur, wilayah, riwayat Guru Besar
+- [x] Panel kelola wilayah & ranting (B-16), dengan penolakan hapus induk yang terbaca
+- [ ] Panel kelola anggota, struktur, riwayat Guru Besar
 - [x] Seeder data awal
 
 ## Skenario uji
@@ -217,3 +219,6 @@ Seeder dipecah menurut ketergantungannya, dan urutannya diatur di `DatabaseSeede
 13. Admin mencabut `is_admin` miliknya sendiri → ditolak
 14. Admin terakhir dicabut hak adminnya atau akunnya dihapus → ditolak, sistem tetap punya minimal satu Admin
 15. Anggota tanpa satu pun hak akses membuka `/admin` → ditolak; Editor diterima; pengguna dengan lebih dari satu hak akses diterima (B-15)
+16. Guru Besar dan Sekben membuka menu wilayah/ranting di panel → terlihat; Admin dan Editor → menunya tidak ada sama sekali (B-16)
+17. Hapus wilayah yang masih punya ranting → ditolak dengan pesan yang terbaca, bukan galat SQL; wilayah yang sudah kosong → terhapus
+18. Buat, sunting, dan hapus wilayah/ranting → ketiganya muncul di audit log (B-10)

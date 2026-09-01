@@ -18,7 +18,10 @@ class RantingFactory extends Factory
     {
         return [
             'wilayah_id' => Wilayah::factory(),
-            'nama' => fake()->unique()->citySuffix().' '.fake()->firstName(),
+            // Tanpa unique(): kolom `nama` tidak punya unique index, dan
+            // kolam citySuffix() hanya belasan nilai — unique() menumpuk
+            // lintas tes dalam satu proses lalu kehabisan.
+            'nama' => fake()->citySuffix().' '.fake()->firstName(),
             'urutan' => 0,
         ];
     }
